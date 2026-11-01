@@ -1,4 +1,4 @@
-import { emptyProject, validateProject, clamp, placement } from './core.js';
+import { emptyProject, validateProject, clamp, placement, scalePhotoZoom, MAX_PHOTO_ZOOM } from './core.js';
 import { W, H, pages, frames, fields } from './templates.js';
 
 const $ = id => document.getElementById(id);
@@ -7,6 +7,7 @@ const cache = new Map();
 let state = emptyProject(), selected = null, view = 'spread', preview = false;
 let db, saveTimer, saveSequence = 0, toastTimer, busy = false, zoom = 1, initialized = false, recoveryBlocked = false;
 let history = [], future = [], interaction = null;
+let pngURLs = [];
 const clone = value => structuredClone(value);
 
 function toast(message, error = false) {
@@ -48,6 +49,7 @@ function persist() {
   } catch { status('Brak zapisu — pobierz kopię JSON', true); }
 }
 function changed(immediate = false) {
+  clearPNGDownloads();
   state.updatedAt = new Date().toISOString();
   status('Zapisywanie…');
   clearTimeout(saveTimer);
@@ -93,7 +95,7 @@ async function processPhoto(file) {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(img.naturalWidth * factor); canvas.height = Math.round(img.naturalHeight * factor);
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fffdf6'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     const src = canvas.toDataURL('image/jpeg', .91);
     await imageFor(src);
@@ -178,7 +180,9 @@ function renderPage(ctx, page) {
     const photo = state.photos[i], img = photo && cache.get(photo.src)?.img;
     if (frame.page !== page || !img?.complete || !img.naturalWidth) return;
     const pos = placement(img.naturalWidth, img.naturalHeight, frame, photo);
-    ctx.save(); ctx.clip(new Path2D(frame.path)); ctx.drawImage(img, pos.x, pos.y, pos.w, pos.h); ctx.restore();
+    ctx.save(); ctx.clip(new Path2D(frame.path));
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(img, pos.x, pos.y, pos.w, pos.h); ctx.restore();
   });
   fields.filter(f => f.page === page).forEach(f => drawWrapped(ctx, state.texts[f.id], f));
   if (page === 0 && state.mood !== null) {
@@ -218,7 +222,7 @@ function buildOverlays() {
       if (!state.photos[i] || busy || interaction?.kind === 'drag') return;
       e.preventDefault(); selectFrame(i);
       if (!interaction) { remember(); interaction = { kind: 'wheel' }; }
-      state.photos[i].zoom = clamp(state.photos[i].zoom - e.deltaY * .0025, 1, 6);
+      state.photos[i].zoom = scalePhotoZoom(state.photos[i].zoom, Math.exp(-e.deltaY * .0015));
       updatePhotoToolbar(); render(); changed();
       clearTimeout(wheelTimer); wheelTimer = setTimeout(() => { interaction = null; }, 300);
     }, { passive: false });
@@ -309,8 +313,9 @@ function moveDrag(e) {
   const frame = frames[drag.i], photo = state.photos[drag.i], img = cache.get(photo.src).img;
   const scale = $(`page-${frame.page}`).getBoundingClientRect().width / W;
   const pos = placement(img.naturalWidth, img.naturalHeight, frame, photo);
-  photo.x = pos.w - frame.w > 1 ? clamp(drag.x + (e.clientX - drag.startX) / scale / ((pos.w - frame.w) / 2), -1, 1) : 0;
-  photo.y = pos.h - frame.h > 1 ? clamp(drag.y + (e.clientY - drag.startY) / scale / ((pos.h - frame.h) / 2), -1, 1) : 0;
+  const rangeX = Math.abs(pos.w - frame.w) / 2, rangeY = Math.abs(pos.h - frame.h) / 2;
+  photo.x = rangeX > .001 ? clamp(drag.x + (e.clientX - drag.startX) / scale / rangeX, -1, 1) : 0;
+  photo.y = rangeY > .001 ? clamp(drag.y + (e.clientY - drag.startY) / scale / rangeY, -1, 1) : 0;
   render(); changed();
 }
 function endDrag(e) {
@@ -343,8 +348,11 @@ function updatePhotoToolbar() {
   if (!photo) return;
   $('selected-title').textContent = `Zdjęcie ${String(selected + 1).padStart(2, '0')}`;
   $('photo-zoom').value = photo.zoom;
-  $('zoom-value').value = `${Math.round(photo.zoom * 100)}%`;
-  for (const id of ['photo-zoom', 'reset-crop', 'remove-photo', 'photo-minus', 'photo-plus']) $(id).disabled = busy;
+  if (document.activeElement !== $('photo-scale')) {
+    $('photo-scale').value = Number((photo.zoom * 100).toPrecision(12));
+    $('photo-scale').removeAttribute('aria-invalid');
+  }
+  for (const id of ['photo-zoom', 'photo-scale', 'reset-crop', 'remove-photo', 'photo-minus', 'photo-plus']) $(id).disabled = busy;
   positionPhotoToolbar();
 }
 function positionPhotoToolbar() {
@@ -397,15 +405,33 @@ function syncAll() {
 
 function download(blob,name){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),10000);}
 function filename(){return(state.title.trim()||'piracki-dziennik').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,80);}
+function clearPNGDownloads() {
+  pngURLs.forEach(url => URL.revokeObjectURL(url)); pngURLs = [];
+  $('png-downloads').hidden = true; $('png-download-links').replaceChildren();
+}
 async function exportPNG(){
   if(busy)return;setBusy(true);
   try{
     await Promise.all([...pages,...state.photos.filter(Boolean).map(p=>p.src)].map(imageFor));
-    const canvas=document.createElement('canvas');canvas.width=W*2;canvas.height=H;const ctx=canvas.getContext('2d');
-    renderPage(ctx,0);ctx.save();ctx.translate(W,0);renderPage(ctx,1);ctx.restore();
-    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-    if(!blob)throw new Error('Nie udało się przygotować PNG.');
-    download(blob,`${filename()}-obie-strony.png`);$('export-dialog').close();toast('Gotowe! Pobrano obie strony w jednym pliku PNG.');
+    const blobs = await Promise.all(pages.map(async (_, page) => {
+      const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+      renderPage(canvas.getContext('2d'), page);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error(`Nie udało się przygotować PNG strony ${page + 1}.`);
+      return blob;
+    }));
+    clearPNGDownloads();
+    blobs.forEach((blob, page) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob); pngURLs.push(link.href);
+      link.download = `${filename()}-strona-${page + 1}.png`;
+      link.className = 'button button-light'; link.textContent = `Pobierz stronę ${page + 1}`;
+      $('png-download-links').append(link);
+    });
+    $('png-downloads').hidden = false;
+    // Keep individual links available if the browser limits automatic downloads.
+    [...$('png-download-links').children].forEach(link => link.click());
+    toast('Przygotowano dwa osobne pliki PNG — po jednym na każdą stronę.');
   }catch(error){toast(error.message,true);}finally{setBusy(false);}
 }
 async function importJSON(file){
@@ -432,6 +458,18 @@ let zoomEditing=false;
 $('photo-zoom').addEventListener('input',e=>{if(busy||!state.photos[selected])return;if(!zoomEditing){remember();zoomEditing=true;}state.photos[selected].zoom=Number(e.target.value);updatePhotoToolbar();render();changed();});
 $('photo-zoom').addEventListener('change',()=>{zoomEditing=false;persist();});
 $('photo-zoom').addEventListener('blur',()=>{zoomEditing=false;});
+$('photo-scale').addEventListener('input', e => {
+  if (busy || selected === null || !state.photos[selected]) return;
+  const value = Number(e.target.value), photoZoom = value / 100;
+  if (!e.target.value || !Number.isFinite(photoZoom) || photoZoom <= 0 || photoZoom > MAX_PHOTO_ZOOM) {
+    e.target.setAttribute('aria-invalid', 'true'); return;
+  }
+  e.target.removeAttribute('aria-invalid');
+  if (!zoomEditing) { remember(); zoomEditing = true; }
+  state.photos[selected].zoom = photoZoom; updatePhotoToolbar(); render(); changed();
+});
+$('photo-scale').addEventListener('blur', () => { zoomEditing = false; updatePhotoToolbar(); persist(); });
+$('photo-scale').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 let titleEditing=false;
 $('project-title').addEventListener('input',e=>{if(!titleEditing){remember();titleEditing=true;}state.title=e.target.value;changed();});
 $('project-title').addEventListener('blur',()=>{titleEditing=false;persist();});
@@ -454,13 +492,13 @@ dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remov
 document.addEventListener('dragover',e=>{if([...e.dataTransfer.types].includes('Files'))e.preventDefault();});
 document.addEventListener('drop',e=>{if([...e.dataTransfer.types].includes('Files'))e.preventDefault();});
 $('close-photo-tools').addEventListener('click',deselectPhoto);
-function changePhotoZoom(amount) {
+function changePhotoZoom(factor) {
   if(busy || selected===null || !state.photos[selected])return;
-  remember();state.photos[selected].zoom=clamp(state.photos[selected].zoom+amount,1,6);
+  remember();state.photos[selected].zoom=scalePhotoZoom(state.photos[selected].zoom,factor);
   updatePhotoToolbar();render();changed();
 }
-$('photo-minus').addEventListener('click',()=>changePhotoZoom(-.1));
-$('photo-plus').addEventListener('click',()=>changePhotoZoom(.1));
+$('photo-minus').addEventListener('click',()=>changePhotoZoom(1/1.1));
+$('photo-plus').addEventListener('click',()=>changePhotoZoom(1.1));
 document.addEventListener('pointerdown',e=>{
   if(selected!==null&&!e.target.closest('.frame-overlay,.photo-toolbar,#replace-input'))deselectPhoto();
 });

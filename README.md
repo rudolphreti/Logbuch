@@ -40,11 +40,11 @@ Adres produkcyjny ma osobny zapis IndexedDB względem uruchomienia lokalnego. Ab
 ## Korzystanie
 
 - Kliknij pustą ramkę na stronie lub upuść na nią zdjęcie JPG, PNG lub WebP. Przycisk „Dodaj zdjęcia” pozwala też wypełnić pozostałe ramki wieloma zdjęciami naraz.
-- Kliknij zdjęcie i przeciągnij je wewnątrz ramki. Tuż przy nim pojawia się mały pasek: zoom, wymiana, reset kadru i usunięcie. Kółko myszy również przybliża zdjęcie. Strzałki klawiatury przesuwają aktywny kadr; Shift zwiększa krok. Ramka przycina zdjęcie.
+- Kliknij zdjęcie i przeciągnij je wewnątrz ramki. Tuż przy nim pojawia się mały pasek: zoom, wymiana, reset kadru i usunięcie. Kółko myszy również zmienia skalę. Zdjęcia można dowolnie pomniejszać, także poniżej rozmiaru ramki: przyciski −/+ działają proporcjonalnie, a pole procentowe przyjmuje dowolną dodatnią wartość. Puste miejsce w kadrze jest białe. Mniejsze zdjęcia można przesuwać wewnątrz ramki. Strzałki klawiatury przesuwają aktywny kadr; Shift zwiększa krok. Ramka przycina zdjęcie.
 - Kliknij miejsce tekstowe **bezpośrednio na szablonie i pisz**. Nie ma bocznych formularzy ani osobnego trybu tekstowego. Tekst na stronie aktualizuje się w trakcie pisania. Escape kończy edycję; Enter kończy edycję pojedynczego wiersza; Ctrl/Cmd+Enter kończy edycję akapitu. Dłuższy tekst jest zawijany i zmniejszany, aby mieścił się w obszarze.
 - Wybierz nastrój, klikając odpowiednią buźkę na pierwszej stronie. Wszystkie zdjęcia i teksty są dostępne równocześnie. Na telefonie domyślnie wyświetlana jest jedna strona, a wybrane pole tekstowe przybliża się do edycji.
 - Cofnij i ponów przywracają także usunięte lub wymienione zdjęcia. Ctrl/Cmd+Z i Ctrl/Cmd+Shift+Z działają poza edytowanymi polami tekstowymi.
-- „Eksportuj → Pobierz PNG” zapisuje **obie strony obok siebie w jednym PNG 2108 × 1492 px**, bez oznaczeń edytora. Ten sam renderer Canvas obsługuje podgląd i eksport.
+- „Eksportuj → Pobierz PNG” zapisuje **dwa osobne pliki PNG po 1054 × 1492 px**, z nazwami zakończonymi `-strona-1.png` i `-strona-2.png`, bez oznaczeń edytora. Ten sam renderer Canvas obsługuje podgląd i eksport. Pobieranie obu plików rozpoczyna się jednym kliknięciem. W oknie eksportu pozostają też linki do każdej strony — również gdy przeglądarka ogranicza pobieranie wielu plików naraz.
 - JSON zawiera cały projekt, w tym osadzone zdjęcia, kadry, teksty i nastrój. Import zastępuje projekt po zweryfikowaniu pliku i odczytaniu zdjęć. Można go cofnąć.
 
 ## Przechowywanie
@@ -57,4 +57,4 @@ Wyczyszczenie danych witryny, tryb prywatny, zmiana przeglądarki lub adresu mog
 
 `templates.js`: współrzędne i wektorowe maski wnętrz dziewięciu ramek oraz obszary tekstowe w układzie oryginałów 1054 × 1492. `core.js`: walidacja projektu i geometria kadrowania. `app.js`: Canvas, IndexedDB, obsługa plików i interfejs. Oryginalne pliki PNG pozostają niezmienione.
 
-Testy `npm test` sprawdzają zgodność danych szablonu, brak pustych obszarów przy kadrowaniu, przenośność projektu i odrzucanie nieprawidłowego importu.
+Testy `npm test` sprawdzają zgodność danych szablonu, kadrowanie i pozycjonowanie zdjęć większych i mniejszych od ramki, przenośność projektu i odrzucanie nieprawidłowego importu.

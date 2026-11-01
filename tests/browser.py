@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw
 from playwright.sync_api import sync_playwright, expect
 
 with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator('[data-frame="0"]').click()
     page.locator("#photo-zoom").fill("2.5")
     page.locator("#photo-zoom").dispatch_event("change")
-    expect(page.locator("#zoom-value")).to_have_text("250%")
+    expect(page.locator("#photo-scale")).to_have_value("250")
     frame = page.locator('[data-frame="0"]')
     box = frame.bounding_box()
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
@@ -103,7 +103,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     with page.expect_file_chooser() as chooser:
         page.locator("#replace-photo").click()
     chooser.value.set_files(files[8])
-    expect(page.locator("#zoom-value")).to_have_text("100%")
+    expect(page.locator("#photo-scale")).to_have_value("100")
     page.locator("#remove-photo").click()
     expect(page.locator("#photo-count")).to_have_text("8 / 9")
     page.locator("#undo-button").click()
@@ -116,7 +116,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator("#json-input").set_input_files(str(saved))
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
     page.locator('[data-frame="0"]').click()
-    expect(page.locator("#zoom-value")).to_have_text("250%")
+    expect(page.locator("#photo-scale")).to_have_value("250")
     bad = Path(temp) / "bad.json"
     bad.write_text('{"version":999}')
     page.locator("#json-input").set_input_files(str(bad))
@@ -124,18 +124,77 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
     print("PASS replacement, removal, undo/redo and atomic JSON import")
 
+    # Shrink below the frame, then drag across white space in the natural direction.
+    page.locator('[data-frame="0"]').click()
+    page.locator("#reset-crop").click()
+    page.locator("#photo-scale").fill("20")
+    page.locator("#photo-scale").blur()
+    page.wait_for_function("""() => {
+        const ctx=document.querySelector('#page-0').getContext('2d');
+        const white=ctx.getImageData(130,270,1,1).data;
+        const photo=ctx.getImageData(220,368,1,1).data;
+        return [...white].every(v=>v===255) && photo[0]<250;
+    }""")
+    frame = page.locator('[data-frame="0"]')
+    box = frame.bounding_box()
+    page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
+    page.mouse.down()
+    page.mouse.move(box['x']+box['width']/2+12,box['y']+box['height']/2+10,steps=5)
+    page.mouse.up()
+    page.locator("#photo-scale").fill("0")
+    expect(page.locator("#photo-scale")).to_have_attribute("aria-invalid","true")
+    page.locator("#photo-scale").blur()
+    expect(page.locator("#photo-scale")).to_have_value("20")
+
+    # Percentage entry, buttons and wheel all support values far below 1%.
+    page.locator('[data-frame="1"]').click()
+    page.locator("#photo-scale").fill("0.0000001")
+    page.locator("#photo-scale").blur()
+    for _ in range(12):
+        page.locator("#photo-minus").click()
+    tiny_percent=float(page.locator("#photo-scale").input_value())
+    assert 0 < tiny_percent < 0.0000001
+    page.locator('[data-frame="1"]').hover()
+    page.mouse.wheel(0,120)
+    page.wait_for_function("old=>Number(document.querySelector('#photo-scale').value)<old",arg=tiny_percent)
+    page.locator("#photo-plus").click()
+    page.locator("#photo-scale").fill("0.0000001")
+    page.locator("#photo-scale").blur()
+    project=download_json()
+    assert project['photos'][0]['zoom']==0.2
+    assert project['photos'][0]['x']>0 and project['photos'][0]['y']>0
+    assert abs(project['photos'][1]['zoom']-1e-9)<1e-22
+
+    # Import the undersized and tiny scales again, preserving both positions.
+    saved.write_text(json.dumps(project))
+    page.locator('[data-frame="0"]').click()
+    page.locator("#photo-scale").fill("70")
+    page.locator("#photo-scale").blur()
+    page.locator("#json-input").set_input_files(str(saved))
+    page.wait_for_function("!document.body.classList.contains('busy')")
+    page.locator('[data-frame="0"]').click()
+    expect(page.locator("#photo-scale")).to_have_value("20")
+    print("PASS white background, small-photo panning, arbitrary downscaling and JSON round trip")
+
     page.locator("#export-button").click()
-    with page.expect_download() as pending:
+    with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-strona-1.png')) as first, page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-strona-2.png')) as second:
         page.locator("#download-png").click()
-    exported = Image.open(pending.value.path()).convert("RGBA")
-    assert exported.size == (2108, 1492)
+    expect(page.locator('#png-download-links a')).to_have_count(2)
     page.wait_for_timeout(200)
-    for i in range(2):
-        data = page.locator(f"#page-{i}").evaluate("canvas=>canvas.toDataURL('image/png')")
-        visible = Image.open(io.BytesIO(base64.b64decode(data.split(",")[1]))).convert("RGBA")
-        half = exported.crop((i * 1054, 0, (i + 1) * 1054, 1492))
-        assert ImageChops.difference(visible, half).getbbox() is None, f"Page {i+1} export mismatch"
-    print("PASS both-page PNG export matches both canvases pixel-for-pixel")
+    for i,pending in enumerate([first,second]):
+        exported=Image.open(pending.value.path()).convert('RGBA')
+        assert exported.size==(1054,1492)
+        data=page.locator(f"#page-{i}").evaluate("canvas=>canvas.toDataURL('image/png')")
+        visible=Image.open(io.BytesIO(base64.b64decode(data.split(',')[1]))).convert('RGBA')
+        assert visible.tobytes()==exported.tobytes(), f"Page {i+1} export mismatch"
+        if i==0:
+            assert exported.getpixel((130,270))==(255,255,255,255)
+    # An explicit per-page download remains available even if a browser blocks a second automatic download.
+    with page.expect_download() as individual:
+        page.locator('#png-download-links a').nth(1).click()
+    assert individual.value.suggested_filename.endswith('-strona-2.png')
+    page.keyboard.press('Escape')
+    print('PASS two separate PNG downloads, white pixels and equality with both canvases')
 
     page.evaluate("window.scrollTo(0,0)")
     page.screenshot(path="/tmp/logbuch-filled.png", full_page=True)
@@ -149,6 +208,12 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     assert page.locator("#text-host").evaluate("e=>parseFloat(getComputedStyle(e).fontSize)") >= 14
     page.keyboard.press("Escape")
     page.locator("#fit-button").click()
+    page.locator('[data-frame="0"]').click()
+    expect(page.locator("#photo-scale")).to_have_value("20")
+    expect(page.locator("#photo-toolbar")).to_be_visible()
+    controls = page.locator("#photo-toolbar").bounding_box()
+    assert controls['x']>=0 and controls['x']+controls['width']<=390
+    page.locator("#close-photo-tools").click()
     assert page.locator("body").evaluate("e=>e.scrollWidth") <= 390
     page.locator('[data-view="1"]').click()
     expect(page.locator('[data-page="0"]')).to_be_hidden()
@@ -168,7 +233,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.goto(os.environ.get("APP_URL", "http://127.0.0.1:3000"))
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
     page.locator('[data-frame="0"]').click()
-    expect(page.locator("#zoom-value")).to_have_text("250%")
+    expect(page.locator("#photo-scale")).to_have_value("20")
     restored = page.evaluate('''() => new Promise((resolve,reject) => {
         const open = indexedDB.open('logbuch-studio',1);
         open.onsuccess = () => {
