@@ -1,6 +1,6 @@
 # Logbuch Studio
 
-Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: oryginalną pierwszą stronę PNG oraz nową drugą stronę `template-page-2.jpg` (załącznik 3481.jpg). Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs po polsku; nadruki oryginalnego szablonu pozostają po niemiecku.
+Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: oryginalną pierwszą stronę PNG oraz drugą stronę `1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png` dodaną przez użytkownika. Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs po polsku; nadruki oryginalnego szablonu pozostają po niemiecku.
 
 ## Uruchomienie
 
@@ -55,6 +55,6 @@ Wyczyszczenie danych witryny, tryb prywatny, zmiana przeglądarki lub adresu mog
 
 ## Architektura i szablony
 
-`templates.js`: współrzędne i wektorowe maski wnętrz dziewięciu ramek oraz obszary tekstowe. Pierwsza strona ma układ 1054 × 1492; współrzędne drugiej strony są opisane w jej natywnym rozmiarze 904 × 1280 i przeliczane na wspólny format eksportu 1054 × 1492. `core.js`: walidacja projektu i geometria kadrowania. `app.js`: Canvas, IndexedDB, obsługa plików i interfejs. Pliki źródłowe grafik pozostają niezmienione. Dotychczasowe projekty IndexedDB i JSON nadal się wczytują; zdjęcia i podpisy zachowują numery, a druga strona używa nowego układu ramek.
+`templates.js`: współrzędne i wektorowe maski wnętrz dziewięciu ramek oraz obszary tekstowe. Obie strony mają natywny rozmiar 1054 × 1492; maski zdjęć i pola tekstowe odpowiadają bezpośrednio współrzędnym tych grafik. `core.js`: walidacja projektu i geometria kadrowania. `app.js`: Canvas, IndexedDB, obsługa plików i interfejs. Pliki źródłowe grafik pozostają niezmienione. Dotychczasowe projekty IndexedDB i JSON nadal się wczytują; zdjęcia i podpisy zachowują numery, a druga strona używa nowego układu ramek.
 
 Testy `npm test` sprawdzają zgodność danych szablonu, kadrowanie i pozycjonowanie zdjęć większych i mniejszych od ramki, przenośność projektu i odrzucanie nieprawidłowego importu.

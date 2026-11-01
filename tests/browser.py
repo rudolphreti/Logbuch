@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         assert page.locator(f"#text-{field}").evaluate("e=>!!e.closest('.page-surface')")
     # The blank second page must actually use the replacement artwork.
     page.wait_for_function('''async () => {
-        const source=new Image(); source.src='template-page-2.jpg'; await source.decode();
+        const source=new Image(); source.src='1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png'; await source.decode();
         const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
         expected.getContext('2d').drawImage(source,0,0,1054,1492);
         return expected.toDataURL()===document.querySelector('#page-1').toDataURL();
@@ -54,17 +54,18 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     expect(page.locator("#save-status")).to_contain_text("Zapisano")
     # All eight new frame interiors contain the photos, while decoration stays intact.
     page.wait_for_function('''async () => {
-        const source=new Image(); source.src='template-page-2.jpg'; await source.decode();
+        const source=new Image(); source.src='1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png'; await source.decode();
         const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
         const reference=expected.getContext('2d'); reference.drawImage(source,0,0,1054,1492);
         const ctx=document.querySelector('#page-1').getContext('2d');
-        const pixel=(context,x,y)=>[...context.getImageData(Math.round(x*1054/904),Math.round(y*1492/1280),1,1).data];
-        const interiors=[[260,280],[620,285],[231,549],[625,550],[260,800],[650,810],[260,1040],[579,1065]];
-        const decorations=[[101,209],[550,170],[91,540],[798,447],[140,729],[642,680],[400,960],[480,1040]];
+        const pixel=(context,x,y)=>[...context.getImageData(x,y,1,1).data];
+        const interiors=[[270,335],[726,350],[300,635],[747,649],[321,922],[751,941],[319,1185],[705,1232]];
+        const decorations=[[105,278],[651,190],[136,640],[951,600],[164,866],[681,796],[446,1074],[821,1197]];
         return interiors.every(([x,y])=>pixel(ctx,x,y).slice(0,3).some(v=>v<235))
             && decorations.every(([x,y])=>pixel(ctx,x,y).every((v,i)=>v===pixel(reference,x,y)[i]));
     }''')
     print('PASS replacement artwork, eight new photo positions and preserved frame decorations')
+    page.screenshot(path='/tmp/logbuch-all-frames.png',full_page=True)
 
     # A file dropped onto a specific template frame replaces only that frame.
     transfer = page.evaluate_handle('''data => {
