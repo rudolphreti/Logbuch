@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f2"><meta name="description" content="Twój piracki dziennik podróży. Dodaj 9 zdjęć, zapisz wspomnienia i pobierz gotowe strony.">
+  <title>Logbuch — studio wspomnień</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23445540'/%3E%3Ctext x='20' y='28' font-size='27' text-anchor='middle' fill='%23fff'%3E⚓%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css"><script type="module" src="app.js"></script>
+</head>
+<body>
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+  <symbol id="i-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v14M8 11h8M3 13v3a9 9 0 0 0 18 0v-3M1 15l2-2 3 2m12 0 3-2 2 2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m4 18 5-6 4 4 3-5 5 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6V3h16v3M12 3v18M8 21h8"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 9a9 9 0 1 1 0 6M3 3v6h6"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="m9 5-6 6 6 6M3 11h12a6 6 0 0 1 6 6v3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 5 6 6-6 6m6-6H9a6 6 0 0 0-6 6v3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3m14-6 3 3-3 3"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 2v4m-2-2h4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5v16M3 3l9 2 9-2v16l-9 2-9-2Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></symbol>
+</defs></svg>
+<header class="app-header">
+  <a class="brand" href="./" aria-label="Logbuch — strona główna"><span class="brand-mark"><svg><use href="#i-anchor"/></svg></span><span>logbuch<span class="brand-dot">.</span></span><span class="studio-label">STUDIO</span></a>
+  <span class="header-divider"></span><div class="project-name"><input id="project-title" aria-label="Nazwa projektu" maxlength="80" value="Nasza wielka przygoda"><span class="project-tag">Projekt osobisty</span></div>
+  <div class="header-actions"><span id="save-status" class="save-status" role="status"><span class="status-dot"></span> Zapisano na urządzeniu</span><button class="button button-quiet" id="help-button" aria-label="Jak to działa"><svg><use href="#i-info"/></svg></button><span class="action-divider"></span><button class="button button-light" id="upload-button"><svg><use href="#i-plus"/></svg><span>Dodaj zdjęcia</span></button><button class="button button-light" id="import-button"><svg><use href="#i-upload"/></svg><span>Importuj JSON</span></button><button class="button button-primary" id="export-button"><svg><use href="#i-download"/></svg>Eksportuj<span class="export-count">2</span></button></div>
+</header>
+<main class="editor">
+<section class="workspace" aria-label="Edytor dziennika">
+  <div class="workspace-toolbar"><div class="view-switch" role="group" aria-label="Widok stron"><button class="active" data-view="spread"><svg><use href="#i-book"/></svg>Obie strony</button><button data-view="0">1</button><button data-view="1">2</button></div><p class="editing-hint">Kliknij ramkę, aby dodać zdjęcie. Kliknij puste miejsce, aby pisać.</p><div class="history-controls"><button class="icon-button" id="undo-button" aria-label="Cofnij" title="Cofnij (Ctrl+Z)" disabled><svg><use href="#i-undo"/></svg></button><button class="icon-button" id="redo-button" aria-label="Ponów" title="Ponów (Ctrl+Shift+Z)" disabled><svg><use href="#i-redo"/></svg></button><span class="toolbar-divider"></span><button class="icon-button" id="preview-button" aria-label="Podgląd bez oznaczeń" title="Podgląd bez oznaczeń" aria-pressed="false"><svg><use href="#i-eye"/></svg></button></div></div>
+  <div class="canvas-scroller" id="canvas-scroller"><div class="spread" id="spread"><article class="page-wrap" data-page="0"><div class="page-caption"><span>STRONA 01</span><span>Nasza podróż</span></div><div class="page-surface"><canvas id="page-0" width="1054" height="1492" aria-label="Strona pierwsza: dziennik podróży"></canvas><div class="page-overlays" id="overlays-0"></div></div></article><article class="page-wrap" data-page="1"><div class="page-caption"><span>STRONA 02</span><span>Przygody w kadrach</span></div><div class="page-surface"><canvas id="page-1" width="1054" height="1492" aria-label="Strona druga: osiem zdjęć i wspomnienia"></canvas><div class="page-overlays" id="overlays-1"></div></div></article></div></div>
+  <div class="workspace-footer"><span class="photo-count-label"><svg><use href="#i-image"/></svg><span id="photo-count">0 / 9</span><span>zdjęć</span></span><span><span class="live-dot"></span>Wszystkie zmiany zapisują się automatycznie</span><div class="canvas-zoom"><button class="icon-button" id="zoom-out" aria-label="Oddal strony">−</button><button id="fit-button" title="Dopasuj do obszaru">Dopasuj</button><button class="icon-button" id="zoom-in" aria-label="Przybliż strony">+</button></div></div>
+</section>
+</main>
+<div id="photo-toolbar" class="photo-toolbar" role="toolbar" aria-label="Narzędzia wybranego zdjęcia" hidden>
+  <div class="photo-toolbar-top"><strong id="selected-title">Zdjęcie 01</strong><span>Przeciągnij, aby ustawić kadr</span><button id="close-photo-tools" class="icon-button" aria-label="Zakończ kadrowanie"><svg><use href="#i-check"/></svg></button></div>
+  <div class="photo-toolbar-controls"><button id="photo-minus" class="icon-button" aria-label="Oddal zdjęcie">−</button><input id="photo-zoom" type="range" min="1" max="6" step="0.01" value="1" aria-label="Przybliżenie zdjęcia"><button id="photo-plus" class="icon-button" aria-label="Przybliż zdjęcie">+</button><output id="zoom-value" for="photo-zoom">100%</output><span class="toolbar-divider"></span><button id="replace-photo" class="icon-button" aria-label="Wymień zdjęcie" title="Wymień zdjęcie"><svg><use href="#i-swap"/></svg></button><button id="reset-crop" class="icon-button" aria-label="Wyśrodkuj kadr" title="Wyśrodkuj kadr"><svg><use href="#i-reset"/></svg></button><button id="remove-photo" class="icon-button" aria-label="Usuń wybrane zdjęcie" title="Usuń zdjęcie"><svg><use href="#i-trash"/></svg></button></div>
+</div>
+<input id="photos-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden><input id="replace-input" type="file" accept="image/jpeg,image/png,image/webp" hidden><input id="json-input" type="file" accept="application/json,.json" hidden>
+<div id="toast" class="toast" role="status" hidden></div>
+<dialog id="export-dialog"><div class="dialog-top"><div><span class="eyebrow">GOTOWE DO ZACHOWANIA</span><h2>Wspomnienia na wynos.</h2></div><button class="icon-button close-dialog" aria-label="Zamknij"><svg><use href="#i-close"/></svg></button></div><p>Obie strony, wszystkie zdjęcia i Twoja historia.</p><button id="download-png" class="export-option"><span class="export-icon"><svg><use href="#i-image"/></svg></span><span><strong>Pobierz PNG</strong><small>Obie strony obok siebie · 2108 × 1492 px</small></span><svg><use href="#i-download"/></svg></button><button id="download-json" class="export-option"><span class="export-icon"><svg><use href="#i-book"/></svg></span><span><strong>Zapisz projekt JSON</strong><small>Zdjęcia, kadry i teksty · do ponownej edycji</small></span><svg><use href="#i-download"/></svg></button><div class="dialog-note"><svg><use href="#i-info"/></svg>JSON to kopia zapasowa. Zaimportuj ją na innym urządzeniu, aby kontynuować pracę.</div></dialog>
+<dialog id="help-dialog"><div class="dialog-top"><div><span class="eyebrow">WITAJ NA POKŁADZIE</span><h2>Twój dziennik w 3 krokach.</h2></div><button class="icon-button close-dialog" aria-label="Zamknij"><svg><use href="#i-close"/></svg></button></div><ol class="help-steps"><li><strong>Dodaj 9 zdjęć</strong><span>Wybierz je jednocześnie lub dodawaj po jednym. Pierwsze trafi na pierwszą stronę, pozostałe na drugą. Możesz też kliknąć lub upuścić plik w dowolnej ramce.</span></li><li><strong>Dopasuj i opowiedz</strong><span>Przeciągaj zdjęcia w ramkach. Użyj suwaka lub kółka myszy, aby je przybliżyć. Kliknij puste miejsce na szablonie i pisz bezpośrednio na stronie. Narzędzia zdjęcia pojawią się przy wybranej ramce.</span></li><li><strong>Zachowaj wspomnienia</strong><span>Pobierz obie strony jako PNG lub zapisz edytowalny projekt JSON. Wszystkie zmiany zapisujemy automatycznie na tym urządzeniu.</span></li></ol><p class="dialog-note">Zapis lokalny działa w tej samej przeglądarce i pod tym samym adresem. Wyczyszczenie danych witryny usuwa zapis — zachowaj kopię JSON.</p><button class="button button-primary full close-dialog">Zaczynamy przygodę<svg><use href="#i-chevron"/></svg></button></dialog>
+</body></html>
