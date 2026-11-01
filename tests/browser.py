@@ -27,6 +27,13 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     assert page.locator(".assets-panel,.inspector,#texts-tab").count() == 0
     for field in ["host", "friday", "caption8", "story"]:
         assert page.locator(f"#text-{field}").evaluate("e=>!!e.closest('.page-surface')")
+    # The blank second page must actually use the replacement artwork.
+    page.wait_for_function('''async () => {
+        const source=new Image(); source.src='template-page-2.jpg'; await source.decode();
+        const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
+        expected.getContext('2d').drawImage(source,0,0,1054,1492);
+        return expected.toDataURL()===document.querySelector('#page-1').toDataURL();
+    }''')
 
     files = []
     for i in range(9):
@@ -45,6 +52,19 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator("#photos-input").set_input_files(files[1:])
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
     expect(page.locator("#save-status")).to_contain_text("Zapisano")
+    # All eight new frame interiors contain the photos, while decoration stays intact.
+    page.wait_for_function('''async () => {
+        const source=new Image(); source.src='template-page-2.jpg'; await source.decode();
+        const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
+        const reference=expected.getContext('2d'); reference.drawImage(source,0,0,1054,1492);
+        const ctx=document.querySelector('#page-1').getContext('2d');
+        const pixel=(context,x,y)=>[...context.getImageData(Math.round(x*1054/904),Math.round(y*1492/1280),1,1).data];
+        const interiors=[[260,280],[620,285],[231,549],[625,550],[260,800],[650,810],[260,1040],[579,1065]];
+        const decorations=[[101,209],[550,170],[91,540],[798,447],[140,729],[642,680],[400,960],[480,1040]];
+        return interiors.every(([x,y])=>pixel(ctx,x,y).slice(0,3).some(v=>v<235))
+            && decorations.every(([x,y])=>pixel(ctx,x,y).every((v,i)=>v===pixel(reference,x,y)[i]));
+    }''')
+    print('PASS replacement artwork, eight new photo positions and preserved frame decorations')
 
     # A file dropped onto a specific template frame replaces only that frame.
     transfer = page.evaluate_handle('''data => {

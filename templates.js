@@ -1,17 +1,40 @@
 export const W = 1054, H = 1492;
-export const pages = ['28b87368-8164-4786-9312-609a35903d29.png', '14cea7f1-270b-4b57-9eb0-6372c31789bb.png'];
-// Coordinates follow the original 1054 × 1492 templates. Paths trace the inner
-// edges so the printed rope, wood, parchment and shell remain visible.
+export const pages = ['28b87368-8164-4786-9312-609a35903d29.png', 'template-page-2.jpg'];
+// Paths trace the inner edges so the printed decorations remain visible.
+// Page two uses the uploaded 904 × 1280 artwork unchanged. Convert its native
+// coordinates to the shared export canvas; first-page coordinates stay intact.
+const SX = W / 904, SY = H / 1280;
+function secondFrame(frame) {
+  return { ...frame, page: 1, x: frame.x * SX, y: frame.y * SY,
+    w: frame.w * SX, h: frame.h * SY,
+    path: frame.path.replace(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g,
+      (_, x, y) => `${(Number(x) * SX).toFixed(3)} ${(Number(y) * SY).toFixed(3)}`) };
+}
+function secondField(field) {
+  return { ...field, page: 1, x: field.x * SX, y: field.y * SY,
+    w: field.w * SX, h: field.h * SY, size: field.size * SY,
+    ...(field.line ? { line: field.line * SY } : {}) };
+}
 export const frames = [
  { page:0, name:'Wyruszamy w podróż', shape:'Prostokąt', x:126,y:267,w:188,h:202,path:'M126 267 L314 267 L314 470 Q220 464 126 468 Z' },
- { page:1, name:'Pierwsza przygoda', shape:'Pergamin', x:145,y:265,w:407,h:247,path:'M188 265 L235 268 L260 276 L283 267 L323 285 L360 280 L391 292 L431 291 L468 304 L494 297 Q493 342 552 347 L543 369 L550 391 L536 414 L542 441 L529 462 L532 483 L522 509 L480 501 L452 497 L427 491 L390 491 L358 483 L320 483 L292 474 L270 483 L243 472 L216 475 L200 462 L177 468 L169 448 L151 449 L155 421 L145 414 L157 387 L149 376 L163 353 L160 336 L175 319 L168 303 L180 289 Z' },
- { page:1, name:'Widok z pokładu', shape:'Koło', x:634,y:286,w:242,h:242,path:'M876 407 A121 121 0 1 1 634 407 A121 121 0 1 1 876 407 Z' },
- { page:1, name:'Mały wielki moment', shape:'Ozdobna ramka', x:139,y:582,w:285,h:208,path:'M139 582 L412 601 L424 790 L145 768 Z' },
- { page:1, name:'Na nieznanym lądzie', shape:'Drewno', x:548,y:637,w:310,h:143,path:'M554 637 L855 640 L853 779 L548 775 Z' },
- { page:1, name:'Skarby po drodze', shape:'Lina', x:79,y:875,w:216,h:187,path:'M112 875 Q166 883 205 875 L264 879 Q292 885 293 909 L294 1038 Q290 1061 267 1062 L108 1060 Q80 1057 80 1030 L79 922 Q94 907 112 875 Z' },
- { page:1, name:'Wspólne odkrycia', shape:'Deska', x:365,y:896,w:554,h:99,path:'M388 896 L891 897 L899 913 L918 914 L914 934 L919 953 L901 966 L908 981 L879 993 L392 995 L370 985 L377 971 L365 954 L375 938 L370 918 Z' },
- { page:1, name:'Chwila do zapamiętania', shape:'Płótno', x:122,y:1110,w:456,h:160,path:'M122 1162 L549 1110 L578 1228 L151 1270 Z' },
- { page:1, name:'Najlepsze wspomnienie', shape:'Muszla', x:655,y:1032,w:328,h:248,path:'M660 1168 Q661 1151 673 1151 Q663 1126 685 1124 Q679 1100 703 1103 Q701 1076 727 1080 Q729 1058 750 1067 Q756 1044 777 1054 Q787 1037 804 1048 Q821 1032 838 1049 Q860 1041 871 1063 Q892 1056 901 1080 Q924 1078 929 1101 Q949 1103 947 1128 Q971 1136 959 1155 Q983 1170 963 1187 Q966 1208 943 1209 L884 1260 Q866 1274 844 1264 Q820 1280 801 1265 Q775 1275 756 1262 L700 1213 Q673 1217 674 1195 Q655 1192 660 1168 Z' }
+ ...[
+  {name:'Pierwsza przygoda',shape:'Ozdobna ramka',x:128,y:182,w:276,h:193,
+   path:'M128 227 L375 182 L404 332 L158 375 Z'},
+  {name:'Widok z pokładu',shape:'Lina',x:516,y:191,w:212,h:185,
+   path:'M550 191 Q625 198 728 217 L707 376 Q617 366 531 349 Q516 338 522 318 L537 247 Z'},
+  {name:'Mały wielki moment',shape:'Koło',x:117,y:449,w:227,h:201,
+   path:'M344 549 C344 606 294 650 231 650 C168 650 117 607 117 549 C117 491 167 449 231 449 C294 449 344 492 344 549 Z'},
+  {name:'Na nieznanym lądzie',shape:'Pergamin',x:449,y:437,w:367,h:204,
+   path:'M471 444 L481 447 L488 437 L500 449 L511 447 L516 457 L535 449 L544 460 L554 447 L567 451 L580 449 L592 455 L607 451 L617 453 L630 450 L642 455 L655 449 L669 453 L683 446 L699 449 L714 441 L729 444 L745 437 L770 437 Q774 467 806 481 L816 495 L809 517 L813 527 L802 540 L808 554 L798 566 L804 582 L797 597 L803 613 L793 625 L802 640 L784 638 L773 630 L757 634 L741 630 L728 633 L711 629 L697 633 L683 629 L670 635 L654 630 L639 634 L625 628 L612 633 L598 629 L584 635 L572 630 L561 635 L550 630 L537 637 L524 632 L512 639 L499 634 L489 641 L470 636 Q473 609 449 603 L451 587 L456 576 L451 563 L459 550 L456 537 L463 524 L460 509 L467 496 L462 484 L472 470 L467 456 Z'},
+  {name:'Skarby po drodze',shape:'Płótno',x:145,y:738,w:232,h:130,
+   path:'M150 738 Q253 751 373 738 L377 861 Q260 872 151 862 L145 759 Z'},
+  {name:'Wspólne odkrycia',shape:'Muszla',x:483,y:695,w:339,h:231,
+   path:'M490 833 Q482 820 497 809 Q489 792 507 784 Q504 764 523 760 Q524 738 546 739 Q552 717 573 723 Q584 702 606 710 Q620 690 640 704 Q657 686 675 704 Q697 694 709 716 Q734 708 742 732 Q766 732 771 753 Q792 760 789 782 Q810 794 805 812 Q822 830 808 842 Q815 858 794 864 Q776 865 759 884 L736 907 Q708 911 695 916 Q675 902 656 915 Q633 912 619 903 Q599 913 579 899 Q559 903 551 880 L533 866 Q505 868 507 851 Q486 849 490 833 Z'},
+  {name:'Chwila do zapamiętania',shape:'Drewno',x:151,y:978,w:232,h:122,
+   path:'M151 978 Q262 984 382 979 L383 1099 Q260 1094 151 1097 Z'},
+  {name:'Najlepsze wspomnienie',shape:'Deska',x:492,y:1005,w:174,h:116,
+   path:'M500 1008 L654 1005 L663 1017 L658 1030 L666 1042 L660 1057 L665 1070 L659 1086 L664 1100 L652 1118 L501 1121 L493 1110 L498 1097 L492 1084 L499 1069 L493 1054 L501 1040 L496 1023 Z'}
+ ].map(secondFrame)
 ];
 export const fields = [
  {id:'host',page:0,label:'Z wizytą u',x:557,y:305,w:440,h:32,size:23,max:80},
@@ -22,6 +45,9 @@ export const fields = [
  {id:'saturday',page:0,label:'Sobota · co się wydarzyło?',x:244,y:817,w:712,h:105,size:22,line:37,max:400},
  {id:'sunday',page:0,label:'Niedziela · co się wydarzyło?',x:244,y:1034,w:712,h:105,size:22,line:37,max:400},
  {id:'treasure',page:0,label:'Nasz największy skarb',x:294,y:1236,w:702,h:68,size:22,line:38,max:200},
- ...Array.from({length:8},(_,i)=>({id:`caption${i+1}`,page:1,label:`Podpis pod zdjęciem ${i+2}`,x:[185,622,169,584,110,451,298,663][i],y:[501,539,815,821,1080,1024,1277,1299][i],w:[168,232,198,190,168,243,224,178][i],h:20,size:15,max:60})),
- {id:'story',page:1,label:'Jeszcze jedna historia…',x:66,y:1359,w:681,h:56,size:21,line:26,max:400}
+ ...[
+  [267,399,150,16], [550,411,140,14], [150,679,190,16], [513,655,234,14],
+  [174,906,180,16], [566,947,158,16], [169,1156,210,16], [500,1158,172,15]
+ ].map(([x,y,w,h],i)=>secondField({id:`caption${i+1}`,label:`Podpis pod zdjęciem ${i+2}`,x,y,w,h,size:11,max:60})),
+ secondField({id:'story',label:'Jeszcze jedna historia…',x:313,y:1179,w:535,h:48,size:16,line:26,max:400})
 ];
