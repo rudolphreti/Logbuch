@@ -1,6 +1,6 @@
 # Logbuch Studio
 
-Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: oryginalną pierwszą stronę PNG oraz drugą stronę `1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png` dodaną przez użytkownika. Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs po polsku; nadruki oryginalnego szablonu pozostają po niemiecku.
+Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: pierwszą stronę `1a4a62cc-f6f3-4fad-b27c-0229b282b101.png` oraz drugą stronę `5ea0771d-2f7f-4574-a89c-82a7d4339f16.png` dodaną przez użytkownika. Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs po polsku; nadruki oryginalnego szablonu pozostają po niemiecku.
 
 ## Uruchomienie
 
@@ -40,9 +40,9 @@ Adres produkcyjny ma osobny zapis IndexedDB względem uruchomienia lokalnego. Ab
 ## Korzystanie
 
 - Kliknij pustą ramkę na stronie lub upuść na nią zdjęcie JPG, PNG lub WebP. Przycisk „Dodaj zdjęcia” pozwala też wypełnić pozostałe ramki wieloma zdjęciami naraz.
-- Kliknij zdjęcie i przeciągnij je wewnątrz ramki. Tuż przy nim pojawia się mały pasek: zoom, wymiana, reset kadru i usunięcie. Kółko myszy również zmienia skalę. Zdjęcia można dowolnie pomniejszać, także poniżej rozmiaru ramki: przyciski −/+ działają proporcjonalnie, a pole procentowe przyjmuje dowolną dodatnią wartość. Puste miejsce w kadrze jest białe. Mniejsze zdjęcia można przesuwać wewnątrz ramki. Strzałki klawiatury przesuwają aktywny kadr; Shift zwiększa krok. Ramka przycina zdjęcie.
+- Kliknij zdjęcie i przeciągnij je wewnątrz ramki. Tuż przy nim pojawia się mały pasek: zoom, wymiana, reset kadru i usunięcie. Kółko myszy również zmienia skalę. Zdjęcia można swobodnie przesuwać poza dawne ograniczenia kadru; odsłonięte miejsce jest białe. Rolka myszy zmienia skalę łagodnie wokół punktu pod kursorem. Na telefonie jeden palec przesuwa zdjęcie, a dwa palce zmieniają skalę i położenie jednocześnie. Zdjęcia można dowolnie pomniejszać, także poniżej rozmiaru ramki: przyciski −/+ działają proporcjonalnie, a pole procentowe przyjmuje dowolną dodatnią wartość. Puste miejsce w kadrze jest białe. Mniejsze zdjęcia można przesuwać wewnątrz ramki. Strzałki klawiatury przesuwają aktywny kadr; Shift zwiększa krok. Ramka przycina zdjęcie.
 - Kliknij miejsce tekstowe **bezpośrednio na szablonie i pisz**. Nie ma bocznych formularzy ani osobnego trybu tekstowego. Tekst na stronie aktualizuje się w trakcie pisania. Escape kończy edycję; Enter kończy edycję pojedynczego wiersza; Ctrl/Cmd+Enter kończy edycję akapitu. Dłuższy tekst jest zawijany i zmniejszany, aby mieścił się w obszarze.
-- Wybierz nastrój, klikając odpowiednią buźkę na pierwszej stronie. Wszystkie zdjęcia i teksty są dostępne równocześnie. Na telefonie domyślnie wyświetlana jest jedna strona, a wybrane pole tekstowe przybliża się do edycji.
+- Wszystkie zdjęcia i teksty są dostępne równocześnie. Na telefonie domyślnie wyświetlana jest jedna strona, a wybrane pole tekstowe przybliża się do edycji.
 - Cofnij i ponów przywracają także usunięte lub wymienione zdjęcia. Ctrl/Cmd+Z i Ctrl/Cmd+Shift+Z działają poza edytowanymi polami tekstowymi.
 - „Eksportuj → Pobierz PNG” zapisuje **dwa osobne pliki PNG po 1054 × 1492 px**, z nazwami zakończonymi `-strona-1.png` i `-strona-2.png`, bez oznaczeń edytora. Ten sam renderer Canvas obsługuje podgląd i eksport. Pobieranie obu plików rozpoczyna się jednym kliknięciem. W oknie eksportu pozostają też linki do każdej strony — również gdy przeglądarka ogranicza pobieranie wielu plików naraz.
 - JSON zawiera cały projekt, w tym osadzone zdjęcia, kadry, teksty i nastrój. Import zastępuje projekt po zweryfikowaniu pliku i odczytaniu zdjęć. Można go cofnąć.
@@ -55,6 +55,12 @@ Wyczyszczenie danych witryny, tryb prywatny, zmiana przeglądarki lub adresu mog
 
 ## Architektura i szablony
 
-`templates.js`: współrzędne i wektorowe maski wnętrz dziewięciu ramek oraz obszary tekstowe. Obie strony mają natywny rozmiar 1054 × 1492; maski zdjęć i pola tekstowe odpowiadają bezpośrednio współrzędnym tych grafik. `core.js`: walidacja projektu i geometria kadrowania. `app.js`: Canvas, IndexedDB, obsługa plików i interfejs. Pliki źródłowe grafik pozostają niezmienione. Dotychczasowe projekty IndexedDB i JSON nadal się wczytują; zdjęcia i podpisy zachowują numery, a druga strona używa nowego układu ramek.
+`templates.js`: współrzędne i wektorowe maski wnętrz dziewięciu ramek oraz obszary tekstowe. Obie strony są rysowane na płótnie 1054 × 1492; maski zdjęć i pola tekstowe używają współrzędnych tego płótna. `core.js`: walidacja projektu i geometria kadrowania. `app.js`: Canvas, IndexedDB, obsługa plików i interfejs. Pliki źródłowe grafik pozostają niezmienione. Dotychczasowe projekty IndexedDB i JSON nadal się wczytują; zdjęcia zachowują numery, a obie strony używają nowego układu ramek.
 
 Testy `npm test` sprawdzają zgodność danych szablonu, kadrowanie i pozycjonowanie zdjęć większych i mniejszych od ramki, przenośność projektu i odrzucanie nieprawidłowego importu.
+
+## Szablony Pepper
+
+Strona 1 używa `1a4a62cc-f6f3-4fad-b27c-0229b282b101.png`, a strona 2 — `5ea0771d-2f7f-4574-a89c-82a7d4339f16.png`. Osiem ramek na drugiej stronie obejmuje małą ramkę z liny. Nowe grafiki mają 1055 × 1491 px i są skalowane do dotychczasowego eksportu 1054 × 1492 px. Pola tekstowe odpowiadają liniom na pierwszej stronie. Dawne podpisy, historia, towarzysz i nastrój pozostają w danych JSON, lecz nie są rysowane na nowych grafikach, które nie mają dla nich miejsc.
+
+Test gestów dotykowych Chromium: przy uruchomionej aplikacji wykonaj `python tests/crop-browser.py` (Playwright i Pillow). Obejmuje przesuwanie, gest dwoma palcami, przejścia między jednym a dwoma palcami, cofanie/ponawianie i odtworzenie zapisu. Starsze kadry JSON nadal są odczytywane; nowe przesunięcia zapisują się w polach `offsetX` i `offsetY` w pikselach płótna.

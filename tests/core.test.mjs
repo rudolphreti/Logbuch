@@ -60,3 +60,34 @@ test('zero, negative and nonfinite scales are rejected while old crops stay comp
 test('malformed projects and remote image references are rejected', () => {
   for(const modify of [p=>p.version=2,p=>p.photos=[],p=>p.photos[0]={src:'https://example.com/a.png',name:'x',zoom:1,x:0,y:0},p=>p.photos[0]={src:'data:image/png;base64,YQ==',name:'x',zoom:Infinity,x:0,y:0},p=>p.texts.story='a'.repeat(401),p=>p.mood=8]){const p=emptyProject();modify(p);assert.throws(()=>validateProject(p));}
 });
+
+test('free movement works at cover size and beyond the former crop limits', async () => {
+  const {transformPhoto} = await import('../core.js');
+  const box = {x:10,y:20,w:300,h:200};
+  const original = {src:'data:image/png;base64,YQ==',name:'photo',zoom:1,x:0,y:0};
+  const moved = transformPhoto(900,600,box,original,1,{x:0,y:0},{x:700,y:-500});
+  const pos = placement(900,600,box,moved);
+  assert.equal(pos.x,710); assert.equal(pos.y,-480);
+  const p=emptyProject();p.photos[0]=moved;
+  assert.deepEqual(validateProject(JSON.parse(JSON.stringify(p))).photos[0],moved);
+  for(const value of [NaN,Infinity,'100']) {
+    p.photos[0]={...moved,offsetX:value};assert.throws(()=>validateProject(p));
+  }
+});
+test('pinch preserves the image point under the moving midpoint', async () => {
+  const {transformPhoto} = await import('../core.js');
+  const box={x:0,y:0,w:300,h:200}, photo={zoom:1,x:.4,y:-.3};
+  const before=placement(1600,900,box,photo);
+  const from={x:80,y:70},to={x:120,y:95};
+  const updated=transformPhoto(1600,900,box,photo,2,from,to);
+  const after=placement(1600,900,box,updated);
+  assert.ok(Math.abs((from.x-before.x)/before.w-(to.x-after.x)/after.w)<1e-12);
+  assert.ok(Math.abs((from.y-before.y)/before.h-(to.y-after.y)/after.h)<1e-12);
+});
+test('wheel zoom is gentle and normalizes pixel, line and page deltas', async () => {
+  const {wheelZoomFactor} = await import('../core.js');
+  assert.ok(wheelZoomFactor(120)>.95);
+  assert.equal(wheelZoomFactor(16),wheelZoomFactor(1,1));
+  assert.equal(wheelZoomFactor(800),wheelZoomFactor(1,2));
+  assert.ok(Math.abs(wheelZoomFactor(120)*wheelZoomFactor(-120)-1)<1e-12);
+});

@@ -25,11 +25,11 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.wait_for_function('document.querySelector("#save-status").textContent.includes("Zapisano")')
     expect(page.locator(".frame-overlay")).to_have_count(9)
     assert page.locator(".assets-panel,.inspector,#texts-tab").count() == 0
-    for field in ["host", "friday", "caption8", "story"]:
+    for field in ["host", "friday", "saturday", "treasure"]:
         assert page.locator(f"#text-{field}").evaluate("e=>!!e.closest('.page-surface')")
     # The blank second page must actually use the replacement artwork.
     page.wait_for_function('''async () => {
-        const source=new Image(); source.src='1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png'; await source.decode();
+        const source=new Image(); source.src='5ea0771d-2f7f-4574-a89c-82a7d4339f16.png'; await source.decode();
         const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
         expected.getContext('2d').drawImage(source,0,0,1054,1492);
         return expected.toDataURL()===document.querySelector('#page-1').toDataURL();
@@ -54,13 +54,13 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     expect(page.locator("#save-status")).to_contain_text("Zapisano")
     # All eight new frame interiors contain the photos, while decoration stays intact.
     page.wait_for_function('''async () => {
-        const source=new Image(); source.src='1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png'; await source.decode();
+        const source=new Image(); source.src='5ea0771d-2f7f-4574-a89c-82a7d4339f16.png'; await source.decode();
         const expected=document.createElement('canvas'); expected.width=1054; expected.height=1492;
         const reference=expected.getContext('2d'); reference.drawImage(source,0,0,1054,1492);
         const ctx=document.querySelector('#page-1').getContext('2d');
         const pixel=(context,x,y)=>[...context.getImageData(x,y,1,1).data];
-        const interiors=[[270,335],[726,350],[300,635],[747,649],[321,922],[751,941],[319,1185],[705,1232]];
-        const decorations=[[105,278],[651,190],[136,640],[951,600],[164,866],[681,796],[446,1074],[821,1197]];
+        const interiors=[[330,300],[819,248],[190,740],[520,640],[840,680],[510,915],[291,1226],[771,1139]];
+        const decorations=[[80,140],[810,75],[80,700],[520,475],[900,520],[390,860],[270,1020],[770,1000]];
         return interiors.every(([x,y])=>pixel(ctx,x,y).slice(0,3).some(v=>v<235))
             && decorations.every(([x,y])=>pixel(ctx,x,y).every((v,i)=>v===pixel(reference,x,y)[i]));
     }''')
@@ -97,9 +97,8 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.wait_for_function("old=>document.querySelector('#page-0').toDataURL()!==old", arg=old_canvas)
     expect(page.locator("#text-host")).to_be_focused()
     page.locator("#text-friday").fill("Wyruszyliśmy nad morze. Znaleźliśmy muszle i prawdziwy skarb!")
-    page.locator("#text-caption8").fill("Nasz najpiękniejszy weekend")
-    page.locator("#text-story").fill("Jeszcze tu wrócimy. ⚓")
-    page.get_by_role("button", name="Wspaniały", exact=True).click()
+    page.locator("#text-treasure").fill("Nasz najpiękniejszy weekend")
+    expect(page.locator(".mood-button")).to_have_count(0)
     page.locator("#project-title").fill("Wspomnienia z podróży")
     page.locator("#project-title").blur()
     expect(page.locator("#save-status")).to_contain_text("Zapisano")
@@ -114,10 +113,10 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     assert len([photo for photo in project["photos"] if photo]) == 9
     assert project["photos"][0]["zoom"] == 2.5
     assert project["photos"][1]["name"] == "drop-target.png"
-    assert project["photos"][0]["x"] != 0 and project["photos"][0]["y"] != 0
+    assert project["photos"][0]["offsetX"] != 0 and project["photos"][0]["offsetY"] != 0
     assert project["texts"]["host"] == "Rodzina Kowalskich"
-    assert project["mood"] == 4
-    print("PASS upload 9 photos, crop, pan, text, mood and portable JSON")
+    assert project["mood"] is None
+    print("PASS upload 9 photos, crop, pan, text and portable JSON")
 
     page.locator('[data-frame="0"]').click()
     expect(page.locator("#photo-toolbar")).to_be_visible()
@@ -152,8 +151,8 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator("#photo-scale").blur()
     page.wait_for_function("""() => {
         const ctx=document.querySelector('#page-0').getContext('2d');
-        const white=ctx.getImageData(130,270,1,1).data;
-        const photo=ctx.getImageData(220,368,1,1).data;
+        const white=ctx.getImageData(100,160,1,1).data;
+        const photo=ctx.getImageData(237,249,1,1).data;
         return [...white].every(v=>v===255) && photo[0]<250;
     }""")
     frame = page.locator('[data-frame="0"]')
@@ -183,7 +182,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator("#photo-scale").blur()
     project=download_json()
     assert project['photos'][0]['zoom']==0.2
-    assert project['photos'][0]['x']>0 and project['photos'][0]['y']>0
+    assert project['photos'][0]['offsetX']>0 and project['photos'][0]['offsetY']>0
     assert abs(project['photos'][1]['zoom']-1e-9)<1e-22
 
     # Import the undersized and tiny scales again, preserving both positions.
@@ -209,7 +208,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         visible=Image.open(io.BytesIO(base64.b64decode(data.split(',')[1]))).convert('RGBA')
         assert visible.tobytes()==exported.tobytes(), f"Page {i+1} export mismatch"
         if i==0:
-            assert exported.getpixel((130,270))==(255,255,255,255)
+            assert exported.getpixel((100,160))==(255,255,255,255)
     # An explicit per-page download remains available even if a browser blocks a second automatic download.
     with page.expect_download() as individual:
         page.locator('#png-download-links a').nth(1).click()

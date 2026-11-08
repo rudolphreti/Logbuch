@@ -1,41 +1,27 @@
 export const W = 1054, H = 1492;
-export const pages = ['28b87368-8164-4786-9312-609a35903d29.png', '1d9d7d11-1378-4f85-97c3-d5efe4d72e5c.png'];
-// Paths trace the inner edges so the printed decorations remain visible.
-// Both artworks use native 1054 × 1492 coordinates.
+export const pages = ['1a4a62cc-f6f3-4fad-b27c-0229b282b101.png', '5ea0771d-2f7f-4574-a89c-82a7d4339f16.png'];
+// Coordinates use the export canvas space. Source artwork is scaled to this size.
+// Masks stay inside the decorations; the small rope frame is also a photo slot.
 export const frames = [
- { page:0, name:'Wyruszamy w podróż', shape:'Prostokąt', x:126,y:267,w:188,h:202,path:'M126 267 L314 267 L314 470 Q220 464 126 468 Z' },
+ {page:0,name:'Z wizytą u',shape:'Kości',x:82,y:138,w:310,h:222,path:'M91 140 Q230 145 390 132 L388 353 Q235 369 82 352 Z'},
  ...[
-  {name:'Pierwsza przygoda',shape:'Ozdobna ramka',x:120,y:217,w:323,h:240,
-   path:'M120 299 L392 217 L443 381 L170 457 Z'},
-  {name:'Widok z pokładu',shape:'Lina',x:609,y:230,w:251,h:228,
-   path:'M666 230 L702 230 L741 242 L782 255 L827 271 L845 282 L858 296 L860 302 L858 328 L849 358 L840 388 L837 400 L832 410 L828 428 L823 438 L815 448 L795 458 L774 458 L736 448 L708 438 L683 428 L656 418 L631 408 L616 398 L614 389 L609 375 L609 361 L619 331 L629 301 L639 271 L655 241 Z'},
-  {name:'Mały wielki moment',shape:'Koło',x:178,y:523,w:244,h:224,
-   path:'M422 635 C422 697 367 747 300 747 C233 747 178 697 178 635 C178 573 233 523 300 523 C367 523 422 573 422 635 Z'},
-  {name:'Na nieznanym lądzie',shape:'Pergamin',x:540,y:500,w:395,h:292,
-   path:'M580 500 L595 509 L608 507 L625 520 L645 520 L661 537 L680 536 L697 550 L713 541 L732 545 L753 550 L769 550 L784 561 L803 559 L820 570 L839 567 L856 578 L873 578 L889 585 L910 578 L925 589 Q913 622 935 648 L930 664 L934 680 L925 696 L931 713 L924 731 L931 747 L924 764 L931 781 L917 792 L901 785 L884 785 L869 777 L849 780 L836 771 L818 775 L804 765 L788 762 L774 764 L758 757 L741 757 L725 748 L711 752 L694 742 L679 745 L661 738 L645 740 L628 730 L609 734 L594 726 L578 730 L563 720 L556 709 L548 705 L540 686 L544 671 L547 655 L554 640 L549 628 L559 613 L558 599 L566 584 L560 572 L570 557 L566 543 L576 528 L574 513 Z'},
-  {name:'Skarby po drodze',shape:'Płótno',x:182,y:823,w:288,h:195,
-   path:'M182 876 L434 823 L470 966 L211 1018 Z'},
-  {name:'Wspólne odkrycia',shape:'Muszla',x:573,y:792,w:379,h:280,
-   path:'M587 906 Q573 892 589 878 Q577 863 601 849 Q595 836 621 825 Q621 812 646 814 Q648 800 674 807 Q688 792 710 805 Q728 792 745 809 Q766 803 783 821 Q805 814 817 836 Q842 835 850 860 Q875 861 880 887 Q901 891 902 912 Q921 920 917 940 Q937 949 928 970 Q948 987 938 1008 Q952 1025 941 1037 Q928 1046 916 1037 L866 1032 Q839 1041 815 1057 Q791 1067 780 1057 Q754 1072 733 1059 Q713 1066 705 1048 Q679 1054 670 1029 L651 1015 Q629 1018 627 1001 L619 970 Q604 955 607 938 Q583 937 587 919 Z'},
-  {name:'Chwila do zapamiętania',shape:'Drewno',x:180,y:1088,w:283,h:205,
-   path:'M180 1145 L428 1088 L463 1237 L214 1293 Z'},
-  {name:'Najlepsze wspomnienie',shape:'Deska',x:601,y:1148,w:199,h:153,
-   path:'M626 1148 L800 1187 L797 1201 L785 1209 L786 1224 L776 1235 L779 1249 L768 1260 L770 1276 L758 1286 L761 1301 L605 1268 L610 1254 L601 1243 L608 1228 L602 1217 L611 1204 L607 1192 L618 1178 L613 1166 Z'}
+  {name:'Pierwsza przygoda',shape:'Żagiel',x:76,y:106,w:552,h:407,path:'M122 171 Q330 153 609 97 Q556 253 603 389 Q444 380 304 442 Q192 458 76 513 Q117 332 122 171 Z'},
+  {name:'Widok z pokładu',shape:'Iluminator',x:676,y:98,w:285,h:300,path:'M961 248 C961 331 897 398 819 398 C740 398 676 331 676 248 C676 165 740 98 819 98 C897 98 961 165 961 248 Z'},
+  {name:'Mały wielki moment',shape:'Kości',x:101,y:624,w:179,h:235,path:'M101 644 L263 624 L280 846 L118 859 Z'},
+  {name:'Na nieznanym lądzie',shape:'Muszla',x:363,y:492,w:318,h:299,path:'M520 492 Q548 491 568 533 Q612 516 634 563 Q666 569 668 611 Q696 639 674 676 Q678 705 643 722 Q588 752 538 791 Q493 780 450 743 Q413 720 382 690 Q357 668 371 637 Q361 606 391 588 Q394 552 429 554 Q445 517 478 536 Q491 499 520 492 Z'},
+  {name:'Skarby po drodze',shape:'Pergamin',x:707,y:527,w:275,h:300,path:'M741 527 L978 566 L969 587 L981 603 L969 627 L975 648 L963 670 L969 693 L957 715 L961 741 L950 764 L953 794 L941 827 L707 780 L716 759 L709 737 L721 714 L715 692 L727 670 L721 648 L734 624 L728 602 L739 579 L733 557 Z'},
+  {name:'Wspólne odkrycia',shape:'Lina',x:389,y:847,w:249,h:127,path:'M416 853 Q450 841 490 861 Q527 865 566 847 Q603 853 617 874 Q650 901 627 924 Q590 940 566 964 Q546 982 518 969 Q476 958 443 962 Q407 964 393 936 Q379 913 398 875 Z'},
+  {name:'Chwila do zapamiętania',shape:'Obroża',x:80,y:1065,w:423,h:323,path:'M503 1226 C503 1315 408 1388 291 1388 C174 1388 80 1315 80 1226 C80 1137 174 1065 291 1065 C408 1065 503 1137 503 1226 Z'},
+  {name:'Najlepsze wspomnienie',shape:'Buda',x:657,y:1026,w:228,h:225,path:'M885 1139 C885 1201 834 1251 771 1251 C708 1251 657 1201 657 1139 C657 1077 708 1026 771 1026 C834 1026 885 1077 885 1139 Z'}
  ].map(frame=>({...frame,page:1}))
 ];
 
 export const fields = [
- {id:'host',page:0,label:'Z wizytą u',x:557,y:305,w:440,h:32,size:23,max:80},
- {id:'from',page:0,label:'Od',x:485,y:381,w:222,h:32,size:23,max:40},
- {id:'to',page:0,label:'Do',x:772,y:381,w:225,h:32,size:23,max:40},
- {id:'companion',page:0,label:'Towarzysz podróży',x:640,y:459,w:358,h:32,size:23,max:80},
- {id:'friday',page:0,label:'Piątek · co się wydarzyło?',x:244,y:602,w:712,h:105,size:22,line:37,max:400},
- {id:'saturday',page:0,label:'Sobota · co się wydarzyło?',x:244,y:817,w:712,h:105,size:22,line:37,max:400},
- {id:'sunday',page:0,label:'Niedziela · co się wydarzyło?',x:244,y:1034,w:712,h:105,size:22,line:37,max:400},
- {id:'treasure',page:0,label:'Nasz największy skarb',x:294,y:1236,w:702,h:68,size:22,line:38,max:200},
- ...[
-  [344,466,166,16], [638,472,138,16], [227,793,190,17], [552,746,138,16],
-  [277,1048,135,16], [697,1099,130,15], [336,1318,168,16], [620,1357,174,17]
- ].map(([x,y,w,h],i)=>({id:`caption${i+1}`,page:1,label:`Podpis pod zdjęciem ${i+2}`,x,y,w,h,size:12,max:60})),
- {id:'story',page:1,label:'Jeszcze jedna historia…',x:372,y:1374,w:620,h:56,size:20,line:30,max:400}
+ {id:'host',page:0,label:'Z wizytą u',x:487,y:281,w:514,h:42,size:27,max:80},
+ {id:'from',page:0,label:'Od',x:570,y:369,w:161,h:34,size:23,max:40},
+ {id:'to',page:0,label:'Do',x:823,y:369,w:177,h:34,size:23,max:40},
+ {id:'friday',page:0,label:'Piątek · co się wydarzyło?',x:116,y:529,w:810,h:162,size:25,line:42,max:400},
+ {id:'saturday',page:0,label:'Sobota · co się wydarzyło?',x:116,y:782,w:810,h:162,size:25,line:42,max:400},
+ {id:'sunday',page:0,label:'Niedziela · co się wydarzyło?',x:116,y:1027,w:810,h:162,size:25,line:41,max:400},
+ {id:'treasure',page:0,label:'Najpiękniejsze przeżycie z Pepperem',x:363,y:1321,w:635,h:78,size:24,line:40,max:200}
 ];
