@@ -15,3 +15,5 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
 
 #png-downloads{padding:4px 0 12px}#png-downloads p{font-size:10px;line-height:1.7;color:#89957b}#png-download-links{display:flex;gap:8px;flex-wrap:wrap}
+
+.photo-rotation-controls{display:flex;align-items:center;justify-content:center;gap:12px;border-top:1px solid var(--border);padding-top:5px;margin-top:5px;font-size:11px;color:#5c704b}.photo-rotation-controls label{display:flex;align-items:center;gap:4px}.photo-rotation-controls input{width:68px;height:32px;text-align:right;border:1px solid var(--border);border-radius:4px;background:#fafbf5;color:inherit}.photo-rotation-controls .icon-button{min-width:40px;height:36px}@media(pointer:coarse){.photo-rotation-controls .icon-button,.photo-rotation-controls input{min-height:44px;min-width:44px}}

@@ -37,13 +37,14 @@ with sync_playwright() as p:
     # Add a second finger, pinch, lift it, continue dragging with the first.
     touch('touchStart',[(1,x-12,y)])
     touch('touchStart',[(1,x-12,y),(2,x+12,y)])
-    touch('touchMove',[(1,x-24,y+5),(2,x+24,y+5)])
-    touch('touchEnd',[(1,x-24,y+5)])
-    touch('touchMove',[(1,x-9,y+15)])
+    touch('touchMove',[(1,x-17,y-12),(2,x+17,y+22)])
+    touch('touchEnd',[(1,x-17,y-12)])
+    touch('touchMove',[(1,x-2,y-2)])
     touch('touchEnd',[])
     page.wait_for_timeout(350)
     pinched=photo(); assert abs(pinched['zoom']-2)<.05,pinched
-    assert pinched['offsetX']>0 and pinched['offsetY']>0,pinched
+    assert abs(pinched['rotation']-45)<1,pinched
+    assert pinched['offsetY']>0,{k:v for k,v in pinched.items() if k!='src'}
     page.locator('#undo-button').click(); page.wait_for_timeout(100)
     assert photo()['zoom']==1 and photo().get('offsetX',0)==0
     page.locator('#redo-button').click(); page.wait_for_timeout(100)
@@ -56,5 +57,5 @@ with sync_playwright() as p:
     page.reload(); expect(page.locator('#photo-count')).to_have_text('1 / 9')
     assert abs(photo()['zoom']-pinched['zoom'])<1e-10
     assert not errors,errors
-    print('PASS real Chromium touch input: free pan, pinch, finger transitions, single-gesture undo/redo, gentle wheel and saved restoration')
+    print('PASS real Chromium touch input: free pan, pinch with rotation, finger transitions, single-gesture undo/redo, gentle wheel and saved restoration')
     browser.close()

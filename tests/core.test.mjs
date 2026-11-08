@@ -91,3 +91,22 @@ test('wheel zoom is gentle and normalizes pixel, line and page deltas', async ()
   assert.equal(wheelZoomFactor(800),wheelZoomFactor(1,2));
   assert.ok(Math.abs(wheelZoomFactor(120)*wheelZoomFactor(-120)-1)<1e-12);
 });
+
+
+test('rotation, scale and translation keep the same image point under the gesture', async () => {
+  const {transformPhoto} = await import('../core.js');
+  const box={x:20,y:30,w:300,h:200},photo={zoom:1.3,x:.2,y:-.3,rotation:25};
+  const from={x:80,y:60},to={x:110,y:95};
+  const before=placement(900,600,box,photo);
+  const result=transformPhoto(900,600,box,photo,1.7,from,to,70);
+  const after=placement(900,600,box,result);
+  const point=(pos,anchor,angle)=>{
+    const dx=anchor.x-pos.x-pos.w/2,dy=anchor.y-pos.y-pos.h/2,r=-angle*Math.PI/180;
+    return [(dx*Math.cos(r)-dy*Math.sin(r))/pos.w,(dx*Math.sin(r)+dy*Math.cos(r))/pos.h];
+  };
+  const a=point(before,from,25),b=point(after,to,95);
+  assert.ok(a.every((v,i)=>Math.abs(v-b[i])<1e-12));
+  const project=emptyProject();project.photos[0]={...result,src:'data:image/png;base64,YQ==',name:'rotated'};
+  assert.equal(validateProject(JSON.parse(JSON.stringify(project))).photos[0].rotation,95);
+  project.photos[0].rotation=Infinity;assert.throws(()=>validateProject(project));
+});

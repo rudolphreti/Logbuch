@@ -59,11 +59,25 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         const reference=expected.getContext('2d'); reference.drawImage(source,0,0,1054,1492);
         const ctx=document.querySelector('#page-1').getContext('2d');
         const pixel=(context,x,y)=>[...context.getImageData(x,y,1,1).data];
+        const edgeInteriors=[[407,871],[589,871],[393,901],[632,901],[487,961],[571,961],[237,1091],[446,1091],[91,1201],[501,1201],[152,1361],[380,1361],[717,1041],[828,1041],[663,1141],[883,1141],[723,1241],[818,1241]];
         const interiors=[[330,300],[819,248],[190,740],[520,640],[840,680],[510,915],[291,1226],[771,1139]];
         const decorations=[[80,140],[810,75],[80,700],[520,475],[900,520],[390,860],[270,1020],[770,1000]];
-        return interiors.every(([x,y])=>pixel(ctx,x,y).slice(0,3).some(v=>v<235))
+        return edgeInteriors.every(([x,y])=>pixel(ctx,x,y).some((v,i)=>v!==pixel(reference,x,y)[i]))
+            && interiors.every(([x,y])=>pixel(ctx,x,y).slice(0,3).some(v=>v<235))
             && decorations.every(([x,y])=>pixel(ctx,x,y).every((v,i)=>v===pixel(reference,x,y)[i]));
     }''')
+    page.wait_for_function('''async () => {
+        const image=new Image();image.src='1a4a62cc-f6f3-4fad-b27c-0229b282b101.png';await image.decode();
+        const source=document.createElement('canvas');source.width=1054;source.height=1492;
+        const reference=source.getContext('2d');reference.drawImage(image,0,0,1054,1492);
+        const actual=document.querySelector('#page-0').getContext('2d');
+        const pixel=(ctx,x,y)=>[...ctx.getImageData(x,y,1,1).data];
+        const bones=[[100,170],[100,250],[100,330],[405,170],[405,250],[405,330],[140,120],[230,120],[340,120],[140,380],[230,380],[340,380]];
+        const interior=[[130,170],[130,250],[130,330],[370,170],[370,250],[370,330],[180,150],[280,150],[180,350],[280,350]];
+        return bones.every(([x,y])=>pixel(actual,x,y).every((v,i)=>v===pixel(reference,x,y)[i]))
+            && interior.every(([x,y])=>pixel(actual,x,y).some((v,i)=>v!==pixel(reference,x,y)[i]));
+    }''')
+    print('PASS precise first-page mask preserves bones and fills the opening')
     print('PASS replacement artwork, eight new photo positions and preserved frame decorations')
     page.screenshot(path='/tmp/logbuch-all-frames.png',full_page=True)
 
@@ -88,6 +102,12 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.mouse.down()
     page.mouse.move(box["x"] + box["width"] / 2 + 25, box["y"] + box["height"] / 2 + 12, steps=5)
     page.mouse.up()
+    page.locator('#photo-rotation').fill('37')
+    page.locator('#photo-rotation').blur()
+    page.locator('#rotate-right').click()
+    expect(page.locator('#photo-rotation')).to_have_value('127')
+    page.locator('#rotate-left').click()
+    expect(page.locator('#photo-rotation')).to_have_value('37')
     # Type directly into the corresponding blank places on the two templates.
     page.locator("#text-host").click()
     expect(page.locator("#text-host")).to_be_focused()
@@ -112,6 +132,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     project = download_json()
     assert len([photo for photo in project["photos"] if photo]) == 9
     assert project["photos"][0]["zoom"] == 2.5
+    assert project["photos"][0]["rotation"] == 37
     assert project["photos"][1]["name"] == "drop-target.png"
     assert project["photos"][0]["offsetX"] != 0 and project["photos"][0]["offsetY"] != 0
     assert project["texts"]["host"] == "Rodzina Kowalskich"
@@ -151,7 +172,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     page.locator("#photo-scale").blur()
     page.wait_for_function("""() => {
         const ctx=document.querySelector('#page-0').getContext('2d');
-        const white=ctx.getImageData(100,160,1,1).data;
+        const white=ctx.getImageData(130,160,1,1).data;
         const photo=ctx.getImageData(237,249,1,1).data;
         return [...white].every(v=>v===255) && photo[0]<250;
     }""")
@@ -185,7 +206,12 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     assert project['photos'][0]['offsetX']>0 and project['photos'][0]['offsetY']>0
     assert abs(project['photos'][1]['zoom']-1e-9)<1e-22
 
-    # Import the undersized and tiny scales again, preserving both positions.
+    page.locator('[data-frame="0"]').click()
+    page.locator('#photo-rotation').fill('33')
+    page.locator('#photo-rotation').blur()
+    project=download_json()
+    assert project['photos'][0]['rotation']==33
+    # Import the undersized and tiny scales again, preserving rotation and positions.
     saved.write_text(json.dumps(project))
     page.locator('[data-frame="0"]').click()
     page.locator("#photo-scale").fill("70")
@@ -208,7 +234,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
         visible=Image.open(io.BytesIO(base64.b64decode(data.split(',')[1]))).convert('RGBA')
         assert visible.tobytes()==exported.tobytes(), f"Page {i+1} export mismatch"
         if i==0:
-            assert exported.getpixel((100,160))==(255,255,255,255)
+            assert exported.getpixel((130,160))==(255,255,255,255)
     # An explicit per-page download remains available even if a browser blocks a second automatic download.
     with page.expect_download() as individual:
         page.locator('#png-download-links a').nth(1).click()

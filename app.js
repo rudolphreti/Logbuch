@@ -1,4 +1,4 @@
-import { emptyProject, validateProject, clamp, placement, scalePhotoZoom, transformPhoto, wheelZoomFactor, MAX_PHOTO_ZOOM } from './core.js';
+import { emptyProject, validateProject, clamp, placement, scalePhotoZoom, normalizeRotation, transformPhoto, wheelZoomFactor, MAX_PHOTO_ZOOM } from './core.js';
 import { W, H, pages, frames, fields } from './templates.js';
 
 const $ = id => document.getElementById(id);
@@ -182,7 +182,9 @@ function renderPage(ctx, page) {
     const pos = placement(img.naturalWidth, img.naturalHeight, frame, photo);
     ctx.save(); ctx.clip(new Path2D(frame.path));
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-    ctx.drawImage(img, pos.x, pos.y, pos.w, pos.h); ctx.restore();
+    ctx.translate(pos.x + pos.w / 2, pos.y + pos.h / 2);
+    ctx.rotate((photo.rotation ?? 0) * Math.PI / 180);
+    ctx.drawImage(img, -pos.w / 2, -pos.h / 2, pos.w, pos.h); ctx.restore();
   });
   fields.filter(f => f.page === page).forEach(f => drawWrapped(ctx, state.texts[f.id], f));
 
@@ -298,7 +300,7 @@ function pagePoint(e, frame) {
 function gesturePoints(drag) {
   const points = [...drag.pointers.values()];
   const a = points[0], b = points[1] ?? a;
-  return {center: {x:(a.x+b.x)/2,y:(a.y+b.y)/2}, distance: Math.hypot(a.x-b.x,a.y-b.y)};
+  return {center: {x:(a.x+b.x)/2,y:(a.y+b.y)/2}, angle: Math.atan2(b.y-a.y,b.x-a.x) * 180 / Math.PI, distance: Math.hypot(a.x-b.x,a.y-b.y)};
 }
 function rebaseDrag(drag) {
   drag.base = clone(state.photos[drag.i]);
@@ -325,13 +327,14 @@ function moveDrag(e) {
   drag.pointers.set(e.pointerId, pagePoint(e, frames[drag.i]));
   const current = gesturePoints(drag);
   const scale = $(`page-${frames[drag.i].page}`).getBoundingClientRect().width / W;
+  const rotationDelta = drag.start.distance > 0 ? normalizeRotation(current.angle - drag.start.angle) : 0;
   const movement = Math.hypot(current.center.x-drag.start.center.x,current.center.y-drag.start.center.y);
-  if (!drag.remembered && Math.max(movement, Math.abs(current.distance-drag.start.distance)) * scale < 2) return;
+  if (!drag.remembered && Math.max(movement, Math.abs(current.distance-drag.start.distance), Math.abs(rotationDelta) * drag.start.distance / 60) * scale < 2) return;
   if (!drag.remembered) { remember(); drag.remembered = true; }
   movedPhoto = true;
   const img = cache.get(drag.base.src).img;
   const factor = drag.start.distance > 0 ? current.distance / drag.start.distance : 1;
-  state.photos[drag.i] = transformPhoto(img.naturalWidth,img.naturalHeight,frames[drag.i],drag.base,Math.max(factor,Number.EPSILON),drag.start.center,current.center);
+  state.photos[drag.i] = transformPhoto(img.naturalWidth,img.naturalHeight,frames[drag.i],drag.base,Math.max(factor,Number.EPSILON),drag.start.center,current.center,rotationDelta);
   updatePhotoToolbar(); render(); changed();
   e.preventDefault();
 }
@@ -369,11 +372,12 @@ function updatePhotoToolbar() {
   if (!photo) return;
   $('selected-title').textContent = `Zdjęcie ${String(selected + 1).padStart(2, '0')}`;
   $('photo-zoom').value = photo.zoom;
+  if (document.activeElement !== $('photo-rotation')) $('photo-rotation').value = Number((photo.rotation ?? 0).toFixed(1));
   if (document.activeElement !== $('photo-scale')) {
     $('photo-scale').value = Number((photo.zoom * 100).toPrecision(12));
     $('photo-scale').removeAttribute('aria-invalid');
   }
-  for (const id of ['photo-zoom', 'photo-scale', 'reset-crop', 'remove-photo', 'photo-minus', 'photo-plus']) $(id).disabled = busy;
+  for (const id of ['photo-zoom', 'photo-scale', 'reset-crop', 'remove-photo', 'photo-minus', 'photo-plus', 'photo-rotation', 'rotate-left', 'rotate-right']) $(id).disabled = busy;
   positionPhotoToolbar();
 }
 function positionPhotoToolbar() {
@@ -474,7 +478,7 @@ $('replace-input').addEventListener('change',async e=>{const target=replacementT
 $('import-button').addEventListener('click',()=>$('json-input').click());
 $('json-input').addEventListener('change',async e=>{await importJSON(e.target.files[0]);e.target.value='';});
 $('remove-photo').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();state.photos[selected]=null;syncAll();changed(true);toast('Zdjęcie usunięte. Możesz cofnąć tę zmianę.');});
-$('reset-crop').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();Object.assign(state.photos[selected],{zoom:1,x:0,y:0,offsetX:0,offsetY:0});updatePhotoToolbar();render();changed(true);});
+$('reset-crop').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();Object.assign(state.photos[selected],{zoom:1,x:0,y:0,offsetX:0,offsetY:0,rotation:0});updatePhotoToolbar();render();changed(true);});
 let zoomEditing=false;
 $('photo-zoom').addEventListener('input',e=>{if(busy||!state.photos[selected])return;if(!zoomEditing){remember();zoomEditing=true;}state.photos[selected].zoom=Number(e.target.value);updatePhotoToolbar();render();changed();});
 $('photo-zoom').addEventListener('change',()=>{zoomEditing=false;persist();});
@@ -491,6 +495,25 @@ $('photo-scale').addEventListener('input', e => {
 });
 $('photo-scale').addEventListener('blur', () => { zoomEditing = false; updatePhotoToolbar(); persist(); });
 $('photo-scale').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+let rotationEditing = false;
+function rotateSelected(angle) {
+  if (busy || selected === null || !state.photos[selected]) return;
+  state.photos[selected].rotation = normalizeRotation(angle);
+  updatePhotoToolbar(); render(); changed();
+}
+$('photo-rotation').addEventListener('input', e => {
+  if (busy || selected === null || !state.photos[selected] || !e.target.value || !Number.isFinite(Number(e.target.value))) return;
+  if (!rotationEditing) { remember(); rotationEditing = true; }
+  rotateSelected(Number(e.target.value));
+});
+$('photo-rotation').addEventListener('blur', () => { rotationEditing = false; $('photo-rotation').value = state.photos[selected]?.rotation ?? 0; persist(); });
+$('photo-rotation').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+for (const [id, delta] of [['rotate-left', -90], ['rotate-right', 90]]) {
+  $(id).addEventListener('click', () => {
+    if (busy || selected === null || !state.photos[selected]) return;
+    remember(); rotateSelected((state.photos[selected].rotation ?? 0) + delta); persist();
+  });
+}
 let titleEditing=false;
 $('project-title').addEventListener('input',e=>{if(!titleEditing){remember();titleEditing=true;}state.title=e.target.value;changed();});
 $('project-title').addEventListener('blur',()=>{titleEditing=false;persist();});
