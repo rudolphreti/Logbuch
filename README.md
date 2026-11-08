@@ -1,6 +1,6 @@
 # Logbuch Studio
 
-Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: pierwszą stronę `1a4a62cc-f6f3-4fad-b27c-0229b282b101.png` oraz drugą stronę `5ea0771d-2f7f-4574-a89c-82a7d4339f16.png` dodaną przez użytkownika. Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs po polsku; nadruki oryginalnego szablonu pozostają po niemiecku.
+Edytor WYSIWYG pirackiego dziennika wykorzystujący **dwa szablony z repozytorium**: pierwszą stronę `1a4a62cc-f6f3-4fad-b27c-0229b282b101.png` oraz drugą stronę `5ea0771d-2f7f-4574-a89c-82a7d4339f16.png` dodaną przez użytkownika. Użytkownik pracuje bezpośrednio na stronach: dodaje dziewięć zdjęć (1 + 8), przesuwa je w ramkach i wpisuje tekst we właściwych miejscach. Interfejs w austriackiej odmianie niemieckiego (`de-AT`); nadruki oryginalnego szablonu pozostają po niemiecku.
 
 ## Uruchomienie
 
@@ -44,7 +44,7 @@ Adres produkcyjny ma osobny zapis IndexedDB względem uruchomienia lokalnego. Ab
 - Kliknij miejsce tekstowe **bezpośrednio na szablonie i pisz**. Nie ma bocznych formularzy ani osobnego trybu tekstowego. Tekst na stronie aktualizuje się w trakcie pisania. Escape kończy edycję; Enter kończy edycję pojedynczego wiersza; Ctrl/Cmd+Enter kończy edycję akapitu. Dłuższy tekst jest zawijany i zmniejszany, aby mieścił się w obszarze.
 - Wszystkie zdjęcia i teksty są dostępne równocześnie. Na telefonie domyślnie wyświetlana jest jedna strona, a wybrane pole tekstowe przybliża się do edycji.
 - Cofnij i ponów przywracają także usunięte lub wymienione zdjęcia. Ctrl/Cmd+Z i Ctrl/Cmd+Shift+Z działają poza edytowanymi polami tekstowymi.
-- „Eksportuj → Pobierz PNG” zapisuje **dwa osobne pliki PNG po 1054 × 1492 px**, z nazwami zakończonymi `-strona-1.png` i `-strona-2.png`, bez oznaczeń edytora. Ten sam renderer Canvas obsługuje podgląd i eksport. Pobieranie obu plików rozpoczyna się jednym kliknięciem. W oknie eksportu pozostają też linki do każdej strony — również gdy przeglądarka ogranicza pobieranie wielu plików naraz.
+- „Eksportuj → Pobierz PNG” zapisuje **dwa osobne pliki PNG po 1054 × 1492 px**, z nazwami zakończonymi `-seite-1.png` i `-seite-2.png`, bez oznaczeń edytora. Ten sam renderer Canvas obsługuje podgląd i eksport. Pobieranie obu plików rozpoczyna się jednym kliknięciem. W oknie eksportu pozostają też linki do każdej strony — również gdy przeglądarka ogranicza pobieranie wielu plików naraz.
 - JSON zawiera cały projekt, w tym osadzone zdjęcia, kadry, teksty i nastrój. Import zastępuje projekt po zweryfikowaniu pliku i odczytaniu zdjęć. Można go cofnąć.
 
 ## Przechowywanie

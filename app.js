@@ -27,31 +27,31 @@ function openDatabase() {
     const request = indexedDB.open('logbuch-studio', 1);
     request.onupgradeneeded = () => request.result.createObjectStore('projects');
     request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error('Zamknij inną kartę z dziennikiem i odśwież stronę.'));
+    request.onblocked = () => reject(new Error('Schließe andere Tabs mit dem Logbuch und lade die Seite neu.'));
     request.onsuccess = () => resolve(request.result);
   });
 }
 function persist() {
   clearTimeout(saveTimer);
   if (!initialized) return;
-  if (recoveryBlocked) { status('Błąd odczytu — zaimportuj JSON', true); return; }
-  if (!db) { status('Brak zapisu — pobierz kopię JSON', true); return; }
+  if (recoveryBlocked) { status('Lesefehler — JSON importieren', true); return; }
+  if (!db) { status('Speichern nicht verfügbar — JSON sichern', true); return; }
   const sequence = ++saveSequence;
   try {
     const tx = db.transaction('projects', 'readwrite');
     tx.objectStore('projects').put(clone(state), 'active');
-    tx.oncomplete = () => { if (sequence === saveSequence) status('Zapisano na urządzeniu'); };
+    tx.oncomplete = () => { if (sequence === saveSequence) status('Am Gerät gespeichert'); };
     tx.onerror = () => {
-      status('Nie zapisano — pobierz kopię JSON', true);
-      toast('Nie udało się zapisać projektu na urządzeniu. Zwolnij miejsce lub pobierz kopię JSON.', true);
+      status('Nicht gespeichert — JSON sichern', true);
+      toast('Das Projekt konnte nicht am Gerät gespeichert werden. Gib Speicherplatz frei oder lade eine JSON-Sicherungskopie herunter.', true);
     };
     tx.onabort = tx.onerror;
-  } catch { status('Brak zapisu — pobierz kopię JSON', true); }
+  } catch { status('Speichern nicht verfügbar — JSON sichern', true); }
 }
 function changed(immediate = false) {
   clearPNGDownloads();
   state.updatedAt = new Date().toISOString();
-  status('Zapisywanie…');
+  status('Wird gespeichert …');
   clearTimeout(saveTimer);
   if (immediate) persist(); else saveTimer = setTimeout(persist, 250);
   updateHistoryButtons();
@@ -70,7 +70,7 @@ function imageFor(src) {
     const img = new Image();
     const promise = new Promise((resolve, reject) => {
       img.onload = () => resolve(img);
-      img.onerror = () => { cache.delete(src); reject(new Error('Nie można odczytać zdjęcia. Użyj JPG, PNG lub WebP.')); };
+      img.onerror = () => { cache.delete(src); reject(new Error('Das Foto konnte nicht gelesen werden. Verwende JPG, PNG oder WebP.')); };
     });
     img.src = src;
     cache.set(src, { img, promise });
@@ -85,12 +85,12 @@ function setBusy(value) {
   updateOverlays(); updatePhotoToolbar(); updateHistoryButtons();
 }
 async function processPhoto(file) {
-  if (file.size > 30 * 1024 * 1024) throw new Error(`„${file.name}” przekracza limit 30 MB.`);
-  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error(`„${file.name}”: obsługujemy JPG, PNG i WebP.`);
+  if (file.size > 30 * 1024 * 1024) throw new Error(`„${file.name}“ ist größer als 30 MB.`);
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error(`„${file.name}“: Unterstützt werden JPG, PNG und WebP.`);
   const url = URL.createObjectURL(file);
   try {
     const img = await imageFor(url);
-    if (!img.naturalWidth || !img.naturalHeight) throw new Error('Zdjęcie ma nieprawidłowy rozmiar.');
+    if (!img.naturalWidth || !img.naturalHeight) throw new Error('Das Foto hat ungültige Abmessungen.');
     const factor = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(img.naturalWidth * factor); canvas.height = Math.round(img.naturalHeight * factor);
@@ -105,7 +105,7 @@ async function processPhoto(file) {
 async function addPhotos(files, replacement = null) {
   if (busy || !files.length) return;
   const slots = replacement === null ? state.photos.map((p,i) => p ? -1 : i).filter(i => i >= 0) : [replacement];
-  if (!slots.length) { toast('Wszystkie ramki są pełne. Wybierz zdjęcie i kliknij „Wymień”.'); return; }
+  if (!slots.length) { toast('Alle Rahmen sind belegt. Wähle ein Foto und klicke auf „Foto austauschen“.'); return; }
   const picked = [...files].slice(0, slots.length);
   setBusy(true);
   let result = [], errors = [];
@@ -118,8 +118,8 @@ async function addPhotos(files, replacement = null) {
       remember(); result.forEach((photo, i) => { state.photos[slots[i]] = photo; });
       selected = slots[0]; syncAll(); changed(true);
       navigator.storage?.persist?.().catch(() => {});
-      const extra = files.length > slots.length ? ' Pozostałe pliki pominięto — jest 9 ramek.' : '';
-      toast(`Dodano ${result.length} ${result.length === 1 ? 'zdjęcie' : 'zdjęć'}.${extra}`);
+      const extra = files.length > slots.length ? ' Weitere Dateien wurden übersprungen. Es gibt 9 Rahmen.' : '';
+      toast(`${result.length} ${result.length === 1 ? 'Foto hinzugefügt' : 'Fotos hinzugefügt'}.${extra}`);
     }
     if (errors.length) toast(errors.join(' '), true);
   } catch (error) { toast(error.message, true); }
@@ -204,10 +204,10 @@ function buildOverlays() {
   frames.forEach((frame, i) => {
     const el = document.createElement('button');
     el.className = 'frame-overlay'; el.dataset.frame = i;
-    el.setAttribute('aria-label', `Zdjęcie ${i + 1}: ${frame.name}`);
-    el.title = 'Kliknij, aby dodać zdjęcie. Przeciągnij, aby zmienić kadr.';
+    el.setAttribute('aria-label', `Foto ${i + 1}: ${frame.name}`);
+    el.title = 'Klicken, um ein Foto hinzuzufügen. Ziehen, um den Bildausschnitt zu ändern.';
     positionElement(el, frame);
-    if (frame.shape === 'Koło') el.classList.add('circle');
+    if (frame.shape === 'Kreis') el.classList.add('circle');
     el.addEventListener('click', () => {
       if (busy || movedPhoto) { movedPhoto = false; return; }
       selectFrame(i);
@@ -252,7 +252,7 @@ function buildOverlays() {
     input.id = `text-${field.id}`; input.dataset.field = field.id; input.className = 'inline-text';
     input.setAttribute('aria-label', field.label); input.title = field.label;
     input.maxLength = field.max; input.spellcheck = false;
-    input.placeholder = field.id.startsWith('caption') ? 'Dodaj podpis…' : 'Kliknij i pisz…';
+    input.placeholder = field.id.startsWith('caption') ? 'Bildunterschrift hinzufügen …' : 'Hier schreiben …';
     input.value = state.texts[field.id];
     input.rows = 1; input.wrap = field.h <= 35 ? 'off' : 'soft';
     positionElement(input, field);
@@ -353,7 +353,7 @@ function updateOverlays() {
     const i = Number(el.dataset.frame), filled = !!state.photos[i];
     el.classList.toggle('selected', i === selected);
     el.classList.toggle('filled', filled);
-    el.innerHTML = filled ? '' : icon('plus') + '<span>Dodaj zdjęcie</span>';
+    el.innerHTML = filled ? '' : icon('plus') + '<span>Foto hinzufügen</span>';
     el.setAttribute('aria-pressed', String(i === selected)); el.disabled = busy;
   });
   document.querySelectorAll('[data-mood]').forEach(el => el.setAttribute('aria-pressed', String(Number(el.dataset.mood) === state.mood)));
@@ -370,7 +370,7 @@ function updatePhotoToolbar() {
   const photo = selected === null ? null : state.photos[selected];
   $('photo-toolbar').hidden = !photo || preview;
   if (!photo) return;
-  $('selected-title').textContent = `Zdjęcie ${String(selected + 1).padStart(2, '0')}`;
+  $('selected-title').textContent = `Foto ${String(selected + 1).padStart(2, '0')}`;
   $('photo-zoom').value = photo.zoom;
   if (document.activeElement !== $('photo-rotation')) $('photo-rotation').value = Number((photo.rotation ?? 0).toFixed(1));
   if (document.activeElement !== $('photo-scale')) {
@@ -418,7 +418,7 @@ function setView(value) {
 function updateViewZoom() {
   $('spread').style.width = `${zoom * 100}%`;
   $('spread').style.maxWidth = zoom === 1 ? (view === 'spread' ? '1260px' : '900px') : 'none';
-  $('fit-button').textContent = zoom === 1 ? 'Dopasuj' : `${Math.round(zoom * 100)}%`;
+  $('fit-button').textContent = zoom === 1 ? 'Einpassen' : `${Math.round(zoom * 100)}%`;
   requestAnimationFrame(() => { syncInlineMetrics(); positionPhotoToolbar(); });
 }
 function syncAll() {
@@ -429,7 +429,7 @@ function syncAll() {
 }
 
 function download(blob,name){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),10000);}
-function filename(){return(state.title.trim()||'piracki-dziennik').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,80);}
+function filename(){return(state.title.trim()||'piraten-logbuch').replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,80);}
 function clearPNGDownloads() {
   pngURLs.forEach(url => URL.revokeObjectURL(url)); pngURLs = [];
   $('png-downloads').hidden = true; $('png-download-links').replaceChildren();
@@ -442,32 +442,32 @@ async function exportPNG(){
       const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
       renderPage(canvas.getContext('2d'), page);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error(`Nie udało się przygotować PNG strony ${page + 1}.`);
+      if (!blob) throw new Error(`Die PNG-Datei für Seite ${page + 1} konnte nicht erstellt werden.`);
       return blob;
     }));
     clearPNGDownloads();
     blobs.forEach((blob, page) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob); pngURLs.push(link.href);
-      link.download = `${filename()}-strona-${page + 1}.png`;
-      link.className = 'button button-light'; link.textContent = `Pobierz stronę ${page + 1}`;
+      link.download = `${filename()}-seite-${page + 1}.png`;
+      link.className = 'button button-light'; link.textContent = `Seite ${page + 1} herunterladen`;
       $('png-download-links').append(link);
     });
     $('png-downloads').hidden = false;
     // Keep individual links available if the browser limits automatic downloads.
     [...$('png-download-links').children].forEach(link => link.click());
-    toast('Przygotowano dwa osobne pliki PNG — po jednym na każdą stronę.');
+    toast('Zwei einzelne PNG-Dateien sind fertig — eine pro Seite.');
   }catch(error){toast(error.message,true);}finally{setBusy(false);}
 }
 async function importJSON(file){
   if(!file||busy)return;
-  if(file.size>120*1024*1024){toast('Plik JSON przekracza limit 120 MB.',true);return;}
+  if(file.size>120*1024*1024){toast('Die JSON-Datei ist größer als 120 MB.',true);return;}
   setBusy(true);
   try{
     const project=validateProject(JSON.parse(await file.text()));
     await Promise.all(project.photos.filter(Boolean).map(p=>imageFor(p.src)));
-    remember();state=project;recoveryBlocked=false;syncAll();changed(true);toast('Projekt wczytany. Możesz kontynuować swoją historię.');
-  }catch(error){toast(error instanceof SyntaxError?'Nieprawidłowy plik JSON. Wybierz plik wyeksportowany z Logbuch.':error.message,true);}
+    remember();state=project;recoveryBlocked=false;syncAll();changed(true);toast('Projekt geladen. Du kannst deine Geschichte weiterschreiben.');
+  }catch(error){toast(error instanceof SyntaxError?'Ungültige JSON-Datei. Wähle eine aus Logbuch exportierte Datei.':error.message,true);}
   finally{setBusy(false);}
 }
 
@@ -477,7 +477,7 @@ $('replace-photo').addEventListener('click',()=>{if(selected!==null)choosePhoto(
 $('replace-input').addEventListener('change',async e=>{const target=replacementTarget ?? selected;if(target!==null)await addPhotos(e.target.files,target);replacementTarget=null;e.target.value='';});
 $('import-button').addEventListener('click',()=>$('json-input').click());
 $('json-input').addEventListener('change',async e=>{await importJSON(e.target.files[0]);e.target.value='';});
-$('remove-photo').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();state.photos[selected]=null;syncAll();changed(true);toast('Zdjęcie usunięte. Możesz cofnąć tę zmianę.');});
+$('remove-photo').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();state.photos[selected]=null;syncAll();changed(true);toast('Foto entfernt. Du kannst diese Änderung rückgängig machen.');});
 $('reset-crop').addEventListener('click',()=>{if(busy||!state.photos[selected])return;remember();Object.assign(state.photos[selected],{zoom:1,x:0,y:0,offsetX:0,offsetY:0,rotation:0});updatePhotoToolbar();render();changed(true);});
 let zoomEditing=false;
 $('photo-zoom').addEventListener('input',e=>{if(busy||!state.photos[selected])return;if(!zoomEditing){remember();zoomEditing=true;}state.photos[selected].zoom=Number(e.target.value);updatePhotoToolbar();render();changed();});
@@ -528,7 +528,7 @@ $('help-button').addEventListener('click',()=>$('help-dialog').showModal());
 document.querySelectorAll('.close-dialog').forEach(el=>el.addEventListener('click',()=>el.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(el=>el.addEventListener('click',e=>{if(e.target===el){const r=el.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)el.close();}}));
 $('download-png').addEventListener('click',exportPNG);
-$('download-json').addEventListener('click',()=>{persist();download(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),`${filename()}.json`);$('export-dialog').close();toast('Zapisano projekt JSON razem ze zdjęciami, kadrami i tekstami.');});
+$('download-json').addEventListener('click',()=>{persist();download(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),`${filename()}.json`);$('export-dialog').close();toast('Projekt als JSON mit Fotos, Bildausschnitten und Texten gespeichert.');});
 const dropZone=$('upload-button');
 dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragging');});
 dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragging'));
@@ -561,7 +561,7 @@ window.addEventListener('pagehide',persist);
 
 async function init(){
   setBusy(true);
-  status('Wczytywanie projektu…');
+  status('Projekt wird geladen …');
   buildOverlays();syncAll();
   if(innerWidth<700)setView('0');
   try{
@@ -569,12 +569,12 @@ async function init(){
     const saved=await new Promise((resolve,reject)=>{const request=db.transaction('projects').objectStore('projects').get('active');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
     if(saved){
       try{const project=validateProject(saved);await Promise.all(project.photos.filter(Boolean).map(p=>imageFor(p.src)));state=project;syncAll();}
-      catch{toast('Nie udało się odczytać zapisanego projektu. Zaimportuj kopię JSON. Nie nadpisujemy zapisu.',true);recoveryBlocked=true;status('Błąd odczytu — zaimportuj JSON',true);}
+      catch{toast('Das gespeicherte Projekt konnte nicht gelesen werden. Importiere eine JSON-Sicherungskopie. Der vorhandene Stand wird nicht überschrieben.',true);recoveryBlocked=true;status('Lesefehler — JSON importieren',true);}
     }
-    if(db&&!recoveryBlocked)status('Zapisano na urządzeniu');
-  }catch{status('Brak zapisu — pobierz kopię JSON',true);toast('Ta przeglądarka blokuje zapis lokalny. Korzystaj z eksportu JSON, aby zachować projekt.',true);}
+    if(db&&!recoveryBlocked)status('Am Gerät gespeichert');
+  }catch{status('Speichern nicht verfügbar — JSON sichern',true);toast('Dieser Browser blockiert das lokale Speichern. Sichere dein Projekt über den JSON-Export.',true);}
   try{await Promise.all(pages.map(imageFor));render();}
-  catch{toast('Nie udało się wczytać szablonu. Odśwież stronę.',true);}
+  catch{toast('Die Vorlage konnte nicht geladen werden. Lade die Seite neu.',true);}
   initialized=true;setBusy(false);
 }
 init();

@@ -12,7 +12,7 @@ with sync_playwright() as p:
     errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
     page.goto(os.environ.get('APP_URL','http://127.0.0.1:3000'))
-    expect(page.locator('#save-status')).to_contain_text('Zapisano')
+    expect(page.locator('#save-status')).to_contain_text('gespeichert')
     image=io.BytesIO(); Image.new('RGB',(900,600),'red').save(image,format='PNG')
     page.locator('#photos-input').set_input_files({'name':'photo.png','mimeType':'image/png','buffer':image.getvalue()})
     expect(page.locator('#photo-count')).to_have_text('1 / 9')

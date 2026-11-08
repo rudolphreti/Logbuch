@@ -17,12 +17,16 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     if shutil.which("chromium"):
         launch["executable_path"] = shutil.which("chromium")
     profile = str(Path(temp) / "browser-profile")
-    context = p.chromium.launch_persistent_context(profile, viewport={"width": 1440, "height": 1000}, accept_downloads=True, **launch)
+    context = p.chromium.launch_persistent_context(profile, viewport={"width": 1440, "height": 1000}, locale="de-AT", accept_downloads=True, **launch)
     page = context.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.goto(os.environ.get("APP_URL", "http://127.0.0.1:3000"))
-    page.wait_for_function('document.querySelector("#save-status").textContent.includes("Zapisano")')
+    page.wait_for_function('document.querySelector("#save-status").textContent.includes("gespeichert")')
+    expect(page.locator('html')).to_have_attribute('lang','de-AT')
+    expect(page.get_by_role('button',name='Fotos hinzufügen',exact=True)).to_be_visible()
+    expect(page.get_by_role('button',name='Exportieren',exact=False)).to_be_visible()
+    expect(page.locator('#project-title')).to_have_value('Unser großes Abenteuer')
     expect(page.locator(".frame-overlay")).to_have_count(9)
     assert page.locator(".assets-panel,.inspector,#texts-tab").count() == 0
     for field in ["host", "friday", "saturday", "treasure"]:
@@ -51,7 +55,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     expect(page.locator("#photo-count")).to_have_text("1 / 9")
     page.locator("#photos-input").set_input_files(files[1:])
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
-    expect(page.locator("#save-status")).to_contain_text("Zapisano")
+    expect(page.locator("#save-status")).to_contain_text("gespeichert")
     # All eight new frame interiors contain the photos, while decoration stays intact.
     page.wait_for_function('''async () => {
         const source=new Image(); source.src='5ea0771d-2f7f-4574-a89c-82a7d4339f16.png'; await source.decode();
@@ -121,7 +125,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     expect(page.locator(".mood-button")).to_have_count(0)
     page.locator("#project-title").fill("Wspomnienia z podróży")
     page.locator("#project-title").blur()
-    expect(page.locator("#save-status")).to_contain_text("Zapisano")
+    expect(page.locator("#save-status")).to_contain_text("gespeichert")
 
     def download_json():
         page.locator("#export-button").click()
@@ -161,7 +165,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     bad = Path(temp) / "bad.json"
     bad.write_text('{"version":999}')
     page.locator("#json-input").set_input_files(str(bad))
-    expect(page.locator("#toast")).to_contain_text("nie jest plik projektu")
+    expect(page.locator("#toast")).to_contain_text("kein unterstütztes Logbuch-Projekt")
     expect(page.locator("#photo-count")).to_have_text("9 / 9")
     print("PASS replacement, removal, undo/redo and atomic JSON import")
 
@@ -223,7 +227,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     print("PASS white background, small-photo panning, arbitrary downscaling and JSON round trip")
 
     page.locator("#export-button").click()
-    with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-strona-1.png')) as first, page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-strona-2.png')) as second:
+    with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-seite-1.png')) as first, page.expect_download(predicate=lambda d:d.suggested_filename.endswith('-seite-2.png')) as second:
         page.locator("#download-png").click()
     expect(page.locator('#png-download-links a')).to_have_count(2)
     page.wait_for_timeout(200)
@@ -238,7 +242,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     # An explicit per-page download remains available even if a browser blocks a second automatic download.
     with page.expect_download() as individual:
         page.locator('#png-download-links a').nth(1).click()
-    assert individual.value.suggested_filename.endswith('-strona-2.png')
+    assert individual.value.suggested_filename.endswith('-seite-2.png')
     page.keyboard.press('Escape')
     print('PASS two separate PNG downloads, white pixels and equality with both canvases')
 
@@ -274,7 +278,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as p:
     context.close()
 
     # Close and reopen the entire browser with the same disk profile.
-    context = p.chromium.launch_persistent_context(profile, viewport={"width": 1440, "height": 1000}, **launch)
+    context = p.chromium.launch_persistent_context(profile, viewport={"width": 1440, "height": 1000}, locale="de-AT", **launch)
     page = context.new_page()
     page.goto(os.environ.get("APP_URL", "http://127.0.0.1:3000"))
     expect(page.locator("#photo-count")).to_have_text("9 / 9")

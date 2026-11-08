@@ -16,5 +16,5 @@ http.createServer(async (req, res) => {
     const body = await readFile(file);
     res.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache' });
     res.end(body);
-  } catch { res.writeHead(404).end('Nie znaleziono pliku'); }
+  } catch { res.writeHead(404).end('Datei nicht gefunden'); }
 }).listen(port, '0.0.0.0', () => console.log(`Logbuch Studio: http://localhost:${port}`));
